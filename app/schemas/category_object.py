@@ -27,5 +27,5 @@ class AllObjectsResponse(BaseModel):
     objects: List[ObjectResponseWithCategories]
 
 class ObjectCreate(ObjectBase):
-    categories: List[CategoryResponse]
+    categories: list[UUID]
     pass

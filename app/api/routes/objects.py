@@ -30,7 +30,7 @@ async def list_objects(db: AsyncSession = Depends(get_db)):
             ids_list = [category.category_id for category in object.categories]
 
             ids = set(ids_list)
-            
+
             categories = await CategoryRepository(db).get_category_by_ids(ids)
 
             object_to_return = ObjectResponseWithCategories(
@@ -100,7 +100,27 @@ async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(ge
         )
     
     object_with_categories = await ObjectRepository(db).get_object_by_id(object_db.id)
-    return object_with_categories
+
+    ids_list = [category.category_id for category in object_with_categories.categories]
+    ids = set(ids_list)
+
+    categories = await CategoryRepository(db).get_category_by_ids(ids)
+
+    return ObjectResponseWithCategories(
+                id=object_with_categories.id,
+                x=object_with_categories.x,
+                y=object_with_categories.y,
+                name=object_with_categories.name,
+                ownership=object_with_categories.ownership,
+                area=object_with_categories.area,
+                status=object_with_categories.status,
+                links=object_with_categories.links,
+                icon=object_with_categories.icon,
+                image=object_with_categories.image,
+                file_storage=object_with_categories.file_storage,
+                description=object_with_categories.description,
+                categories=[CategoryResponse.model_validate(category) for category in categories]
+            )
 
 
 @router.put("/{object_id}", response_model=ObjectResponseWithCategories)
