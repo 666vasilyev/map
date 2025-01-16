@@ -13,7 +13,7 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
     categories = await CategoryRepository(db).get_all_categories()
 
     if categories:
-        return categories
+        return AllCategoryResponse(categories=categories)
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categories not found")
 

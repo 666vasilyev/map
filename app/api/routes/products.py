@@ -15,7 +15,7 @@ async def list_products(db: AsyncSession = Depends(get_db)):
     products = await ProductRepository(db).get_all_products()
     if not products:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No products found")
-    return products
+    return AllProductResponse(products=products)
 
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product_by_id(
