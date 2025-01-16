@@ -9,6 +9,8 @@ from app.repositories.object_repository import ObjectRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.association_repository import AssociationRepository
 
+from app.db.models import Chain, Category, Object, Product, ObjectCategoryAssociation
+
 
 async def get_db() -> AsyncSession:
     async with async_session() as session:
@@ -24,7 +26,7 @@ async def get_current_chain(chain_id: UUID, db: AsyncSession = Depends(get_db)):
     else:
         return current_chain
     
-async def get_current_category(category_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_current_category(category_id: UUID, db: AsyncSession = Depends(get_db)) -> Category:
     current_category = await CategoryRepository(db).get_category_by_id(category_id)
     if not current_category:
         raise HTTPException(

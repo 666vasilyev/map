@@ -3,13 +3,13 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.schemas.enums import StatusEnum
+from app.schemas.category import CategoryResponse
 
 class ObjectBase(BaseModel):
     x: float
     y: float
     name: str
     ownership: Optional[str]
-    category: str
     area: float
     status: StatusEnum
     links: Optional[str]
@@ -18,8 +18,8 @@ class ObjectBase(BaseModel):
     file_storage: Optional[str]
     description: Optional[str]
 
-class ObjectCreate(ObjectBase):
-    pass
+
+
 
 class ObjectResponse(ObjectBase):
     id: UUID
@@ -27,8 +27,6 @@ class ObjectResponse(ObjectBase):
     class Config:
         from_attributes = True
 
-class AllObjectsResponse(BaseModel):
-    objects: List[ObjectResponse]
 
 class ObjectUpdate(BaseModel):
     x: Optional[float]

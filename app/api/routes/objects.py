@@ -7,7 +7,8 @@ from app.repositories.object_repository import ObjectRepository
 from app.repositories.association_repository import AssociationRepository
 from app.repositories.category_repository import CategoryRepository
 
-from app.schemas.object import ObjectCreate, ObjectResponse, ObjectUpdate, AllObjectsResponse
+from app.schemas.object import  ObjectUpdate
+from app.schemas.category_object import ObjectCreate, ObjectResponseWithCategories, AllObjectsResponse
 from app.api.dependencies import get_db, get_current_object
 from app.db.models import Object, Category
 
@@ -26,38 +27,53 @@ async def list_objects(db: AsyncSession = Depends(get_db)):
     else:
         return AllObjectsResponse(objects=objects)
 
-@router.get("/{object_id}", response_model=ObjectResponse)
+@router.get("/{object_id}", response_model=ObjectResponseWithCategories)
 async def get_object_by_id(
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
     ):
     return current_object
 
-@router.post("/", response_model=ObjectResponse)
+@router.post("/", response_model=ObjectResponseWithCategories)
 async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(get_db)):
 
-    category_db = await CategoryRepository(db).get_category_by_name(category_name=object_data.category)
+    for category_id in object_data.categories:
 
-    if not category_db:
+        category_db = await CategoryRepository(db).get_category_by_id(category_id=category_id)
 
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Current category not found"
-        )
+        if not category_db:
 
-    object = Object(**object_data.model_dump())
-    object_db = await ObjectRepository(db).create_object(object)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Category with id {category_id} not found"
+            )
 
-
-    await AssociationRepository(db).create_association(
-        object_id=object_db.id,
-        category_id=category_db.id
+    obj = Object(
+        x=object_data.x,
+        y=object_data.y,
+        name=object_data.name,
+        ownership=object_data.ownership,
+        area=object_data.area,
+        status=object_data.status.value,
+        links=object_data.links,
+        icon=object_data.icon,
+        image=object_data.image,
+        file_storage=object_data.file_storage,
+        description=object_data.description
     )
+    object_db = await ObjectRepository(db).create_object(obj)
+
+    for category_id in object_data.categories:
+        await AssociationRepository(db).create_association(
+            object_id=object_db.id,
+            category_id=category_db.id
+        )
     
-    return object_db
+    object_with_categories = await ObjectRepository(db).get_object_by_id(object_db.id)
+    return object_with_categories
 
 
-@router.put("/{object_id}", response_model=ObjectResponse)
+@router.put("/{object_id}", response_model=ObjectResponseWithCategories)
 async def update_object(
     object_data: ObjectUpdate, 
     current_object: Object = Depends(get_current_object),
