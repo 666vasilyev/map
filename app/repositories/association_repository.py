@@ -2,6 +2,8 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import joinedload
+
 from app.db.models import ObjectCategoryAssociation
 
 class AssociationRepository:
@@ -17,17 +19,26 @@ class AssociationRepository:
             raise NoResultFound(f"Association with id {association_id} not found")
         return association
 
-    async def get_associations_by_object(self, object_id: uuid.UUID) -> list[ObjectCategoryAssociation]:
+    async def get_associations_by_object(self, object_id: uuid.UUID):
         result = await self.db.execute(
-            select(ObjectCategoryAssociation).where(ObjectCategoryAssociation.object_id == object_id)
+            select(ObjectCategoryAssociation)
+            .options(joinedload(ObjectCategoryAssociation.object))
+            .options(joinedload(ObjectCategoryAssociation.category))
+            .where(ObjectCategoryAssociation.object_id == object_id)
         )
         return result.scalars().all()
 
     async def get_associations_by_category(self, category_id: uuid.UUID) -> list[ObjectCategoryAssociation]:
         result = await self.db.execute(
-            select(ObjectCategoryAssociation).where(ObjectCategoryAssociation.category_id == category_id)
+            select(ObjectCategoryAssociation)
+            .options(
+                joinedload(ObjectCategoryAssociation.object),  # Предзагрузка связанного объекта
+                joinedload(ObjectCategoryAssociation.category)  # Предзагрузка связанной категории
+            )
+            .where(ObjectCategoryAssociation.category_id == category_id)
         )
         return result.scalars().all()
+
 
     async def create_association(self, object_id: uuid.UUID, category_id: uuid.UUID) -> ObjectCategoryAssociation:
         association = ObjectCategoryAssociation(object_id=object_id, category_id=category_id)
