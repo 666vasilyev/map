@@ -11,8 +11,11 @@ class ObjectRepository:
         self.db = db
 
     async def get_all_objects(self) -> List[Object]:
-        result = await self.db.execute(select(Object))
-        return result.scalars().all()
+        result = await self.db.execute(
+            select(Object)
+            .options(joinedload(Object.categories))
+    )
+        return result.unique().scalars().all()
 
     async def get_object_by_id(self, object_id: UUID) -> Object:
         result = await self.db.execute(
@@ -25,8 +28,9 @@ class ObjectRepository:
     async def get_object_by_ids(self, object_ids: list[UUID]) -> List[Object]:
         result = await self.db.execute(
             select(Object)
+            .options(joinedload(Object.categories))
             .where(Object.id.in_(object_ids)))
-        objects = result.scalars().all()
+        objects = result.unique().scalars().all()
         return objects
 
     async def create_object(self, obj: Object) -> Object:

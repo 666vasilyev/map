@@ -22,7 +22,9 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 
         for category in categories:
 
-            ids = [object.object_id for object in category.objects]
+            ids_list = [object.object_id for object in category.objects]
+            ids = set(ids_list)
+
             objects = await ObjectRepository(db).get_object_by_ids(ids)
 
             category_to_return = CategoryResponseWithObjects(

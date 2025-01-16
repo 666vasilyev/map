@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from uuid import UUID
+from typing import List
 
 from app.db.models import Category
 
@@ -25,10 +26,14 @@ class CategoryRepository:
         category = result.unique().scalar_one_or_none()
         return category
     
-    # async def get_category_by_name(self, category_name: str) -> Category | None:
-    #     result = await self.db.execute(select(Category).where(Category.name == category_name))
-    #     category = result.scalar_one_or_none()
-    #     return category
+    async def get_category_by_ids(self, category_ids: list[UUID]) -> List[Category] | None:
+        result = await self.db.execute(
+            select(Category)
+            .options(joinedload(Category.objects))
+            .where(Category.id.in_(category_ids)))
+        category = result.unique().scalars().all()
+        return category
+    
 
     async def create_category(self, category: Category):
         self.db.add(category)

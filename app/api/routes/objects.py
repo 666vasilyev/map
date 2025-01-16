@@ -7,7 +7,9 @@ from app.repositories.object_repository import ObjectRepository
 from app.repositories.association_repository import AssociationRepository
 from app.repositories.category_repository import CategoryRepository
 
-from app.schemas.object import  ObjectUpdate
+from app.schemas.object import ObjectUpdate
+from app.schemas.category import CategoryResponse
+
 from app.schemas.category_object import ObjectCreate, ObjectResponseWithCategories, AllObjectsResponse
 from app.api.dependencies import get_db, get_current_object
 from app.db.models import Object, Category
@@ -19,13 +21,41 @@ logging.basicConfig(level=logging.INFO)
 @router.get("/", response_model=AllObjectsResponse)
 async def list_objects(db: AsyncSession = Depends(get_db)):
     objects = await ObjectRepository(db).get_all_objects()
-    if not objects:
+    if objects:
+
+        answers = []
+
+        for object in objects:
+
+            ids_list = [category.category_id for category in object.categories]
+
+            ids = set(ids_list)
+            
+            categories = await CategoryRepository(db).get_category_by_ids(ids)
+
+            object_to_return = ObjectResponseWithCategories(
+                id=object.id,
+                x=object.x,
+                y=object.y,
+                name=object.name,
+                ownership=object.ownership,
+                area=object.area,
+                status=object.status,
+                links=object.links,
+                icon=object.icon,
+                image=object.image,
+                file_storage=object.file_storage,
+                description=object.description,
+                categories=[CategoryResponse.model_validate(category) for category in categories]
+            )
+
+            answers.append(object_to_return)
+        return AllObjectsResponse(objects=answers)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No objects found"
         )
-    else:
-        return AllObjectsResponse(objects=objects)
 
 @router.get("/{object_id}", response_model=ObjectResponseWithCategories)
 async def get_object_by_id(
