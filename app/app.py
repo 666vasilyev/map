@@ -6,7 +6,6 @@ from app.api.routes.chains import router as chain_router
 from app.api.routes.categories import router as category_router
 from app.api.routes.objects import router as object_router
 from app.api.routes.products import router as product_router
-from app.api.routes.association import router as association_router
 
 
 def get_app() -> FastAPI:
@@ -17,7 +16,5 @@ def get_app() -> FastAPI:
     app.include_router(category_router, prefix="/categories", tags=["Categories"])
     app.include_router(object_router, prefix="/objects", tags=["Objects"])
     app.include_router(product_router, prefix="/products", tags=["Products"])
-    app.include_router(association_router, prefix="/associations", tags=["Associations"])
-
 
     return app
