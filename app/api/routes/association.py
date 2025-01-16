@@ -1,16 +1,20 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 from app.repositories.association_repository import AssociationRepository
+
 from app.schemas.association import AssociationCreate, AssociationResponse, AssociationsByObjectResponse, AssociationsByCategoryResponse
 from app.schemas.object import ObjectResponse
 from app.schemas.category import CategoryResponse
 
-from app.api.dependencies import get_db, get_current_association
-from app.db.models import ObjectCategoryAssociation
+from app.api.dependencies import get_db
 
 router = APIRouter()
+
+logging.basicConfig(level=logging.INFO)
 
 @router.post("/", response_model=AssociationResponse)
 async def create_association(association_data: AssociationCreate, db: AsyncSession = Depends(get_db)):
