@@ -1,6 +1,7 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 
 from app.repositories.object_repository import ObjectRepository
 from app.repositories.association_repository import AssociationRepository
@@ -11,6 +12,8 @@ from app.api.dependencies import get_db, get_current_object
 from app.db.models import Object, Category
 
 router = APIRouter()
+
+logging.basicConfig(level=logging.INFO)
 
 @router.get("/", response_model=AllObjectsResponse)
 async def list_objects(db: AsyncSession = Depends(get_db)):
@@ -37,8 +40,10 @@ async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(ge
 
     if not category_db:
 
-        category = Category(name=object_data.category)
-        category_db = await CategoryRepository(db).create_category(category)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Current category not found"
+        )
 
     object = Object(**object_data.model_dump())
     object_db = await ObjectRepository(db).create_object(object)
@@ -70,7 +75,7 @@ async def update_object(
 
         await AssociationRepository(db).delete_association_from_object(current_object.id)
 
-        association_db = await AssociationRepository(db).create_association(
+        await AssociationRepository(db).create_association(
             object_id=current_object.id,
             category_id=category_db.id
         )
