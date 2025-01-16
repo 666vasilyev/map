@@ -16,12 +16,12 @@ class ObjectCategoryAssociation(Base):
 
     object: Mapped["Object"] = relationship(
         "Object", 
-        back_populates="object_category_associations"
+        back_populates="categories"
     )
     
     category: Mapped["Category"] = relationship(
         "Category", 
-        back_populates="object_category_associations"
+        back_populates="objects"
     )
 
 
@@ -39,10 +39,6 @@ class Chain(Base):
         "Object", back_populates="chains_source", foreign_keys=[source_object_id]
     )
 
-    # target_object: Mapped["Object"] = relationship(
-    #     "Object", back_populates="chains_target", foreign_keys=[target_object_id]
-    # )
-
     product: Mapped["Product"] = relationship(
         "Product", back_populates="chains", foreign_keys=[product_id]
     )
@@ -55,7 +51,6 @@ class Object(Base):
     y: Mapped[float] = mapped_column(nullable=False)
     name: Mapped[str] = mapped_column(nullable=False)
     ownership: Mapped[Optional[str]] = mapped_column(nullable=True)
-    category: Mapped[str] = mapped_column(nullable=False)
     area: Mapped[float] = mapped_column(nullable=False)
     status: Mapped[int] = mapped_column(nullable=False)
     links: Mapped[Optional[str]] = mapped_column(nullable=True)
@@ -76,14 +71,7 @@ class Object(Base):
         foreign_keys="[Chain.source_object_id]"
     )
 
-    # Цепочки, где объект цель
-    # chains_target: Mapped[List["Chain"]] = relationship(
-    #     "Chain", 
-    #     back_populates="target_object", 
-    #     foreign_keys="[Chain.target_object_id]"
-    # )
-
-    object_category_associations: Mapped[List["ObjectCategoryAssociation"]] = relationship(
+    categories: Mapped[List["ObjectCategoryAssociation"]] = relationship(
         "ObjectCategoryAssociation", 
         back_populates="object"
     )
@@ -115,7 +103,7 @@ class Category(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(nullable=False, unique=True)
     
-    object_category_associations: Mapped[List["ObjectCategoryAssociation"]] = relationship(
+    objects: Mapped[List["ObjectCategoryAssociation"]] = relationship(
         "ObjectCategoryAssociation", 
         back_populates="category", 
     )

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 from uuid import UUID
 
 from app.db.models import Category
@@ -11,18 +11,24 @@ class CategoryRepository:
         self.db = db
 
     async def get_all_categories(self):
-        result = await self.db.execute(select(Category))
-        return result.scalars().all()
+        result = await self.db.execute(
+            select(Category)
+            .options(joinedload(Category.objects))
+        )
+        return result.unique().scalars().all()
 
     async def get_category_by_id(self, category_id: UUID) -> Category | None:
-        result = await self.db.execute(select(Category).where(Category.id == category_id))
-        category = result.scalar_one_or_none()
+        result = await self.db.execute(
+            select(Category)
+            .options(joinedload(Category.objects))
+            .where(Category.id == category_id))
+        category = result.unique().scalar_one_or_none()
         return category
     
-    async def get_category_by_name(self, category_name: str) -> Category | None:
-        result = await self.db.execute(select(Category).where(Category.name == category_name))
-        category = result.scalar_one_or_none()
-        return category
+    # async def get_category_by_name(self, category_name: str) -> Category | None:
+    #     result = await self.db.execute(select(Category).where(Category.name == category_name))
+    #     category = result.scalar_one_or_none()
+    #     return category
 
     async def create_category(self, category: Category):
         self.db.add(category)

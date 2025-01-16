@@ -1,8 +1,8 @@
-"""initial migration
+"""init
 
-Revision ID: dfb0ce88ed3c
+Revision ID: 8928b2225da8
 Revises: 
-Create Date: 2025-01-13 19:41:59.618534
+Create Date: 2025-01-16 15:30:39.891448
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'dfb0ce88ed3c'
+revision: str = '8928b2225da8'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,7 +23,8 @@ def upgrade() -> None:
     op.create_table('categories',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('objects',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -31,7 +32,6 @@ def upgrade() -> None:
     sa.Column('y', sa.Float(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('ownership', sa.String(), nullable=True),
-    sa.Column('category', sa.String(), nullable=False),
     sa.Column('area', sa.Float(), nullable=False),
     sa.Column('status', sa.Integer(), nullable=False),
     sa.Column('links', sa.String(), nullable=True),
