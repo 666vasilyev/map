@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
+from typing import List
 
 from app.db.models import ObjectCategoryAssociation
 
@@ -19,7 +20,7 @@ class AssociationRepository:
             raise NoResultFound(f"Association with id {association_id} not found")
         return association
 
-    async def get_associations_by_object(self, object_id: uuid.UUID):
+    async def get_associations_by_object(self, object_id: uuid.UUID) -> List[ObjectCategoryAssociation]:
         result = await self.db.execute(
             select(ObjectCategoryAssociation)
             .options(joinedload(ObjectCategoryAssociation.object))
@@ -28,7 +29,7 @@ class AssociationRepository:
         )
         return result.scalars().all()
 
-    async def get_associations_by_category(self, category_id: uuid.UUID) -> list[ObjectCategoryAssociation]:
+    async def get_associations_by_category(self, category_id: uuid.UUID) -> List[ObjectCategoryAssociation]:
         result = await self.db.execute(
             select(ObjectCategoryAssociation)
             .options(
@@ -49,5 +50,10 @@ class AssociationRepository:
 
     async def delete_association(self, association_id: uuid.UUID) -> None:
         association = await self.get_association_by_id(association_id)
+        await self.db.delete(association)
+        await self.db.commit()
+
+    async def delete_association_from_object(self, object_id: uuid.UUID) -> None:
+        association = await self.get_associations_by_object(object_id)
         await self.db.delete(association)
         await self.db.commit()
