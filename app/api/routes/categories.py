@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.db.models import Category
 from app.repositories.category_repository import CategoryRepository
@@ -60,7 +61,10 @@ async def get_category_by_id(
 @router.post("/", response_model=CategoryResponse)
 async def create_category(category_data: CategoryCreate, db: AsyncSession = Depends(get_db)):
     category = Category(name=category_data.name)
-    return await CategoryRepository(db).create_category(category)
+    try:
+        return await CategoryRepository(db).create_category(category)
+    except IntegrityError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category already exists")
 
 @router.put("/{category_id}", response_model=CategoryResponse)
 async def update_category(
