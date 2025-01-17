@@ -154,7 +154,8 @@ async def delete_object(
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
     ):
+    for category in current_object.categories:
+        await AssociationRepository(db).delete_association(category.id)
     await ObjectRepository(db).delete_object(current_object)
-    await AssociationRepository(db).delete_association_from_object(current_object.id)
 
 

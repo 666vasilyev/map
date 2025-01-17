@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from app.db.models import Category
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.object_repository import ObjectRepository
+from app.repositories.association_repository import AssociationRepository
+
 
 from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.schemas.category_object import AllCategoryResponse, CategoryResponseWithObjects
@@ -78,8 +80,11 @@ async def update_category(
 
 @router.delete("/{category_id}")
 async def delete_category(
-    current_category = Depends(get_current_category),
+    current_category: Category = Depends(get_current_category),
     db: AsyncSession = Depends(get_db)
     ):
+    for object in current_category.objects:
+        await AssociationRepository(db).delete_association(object.id)
+
     await CategoryRepository(db).delete_category(current_category)
        

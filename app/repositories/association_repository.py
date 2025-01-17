@@ -51,7 +51,3 @@ class AssociationRepository:
         association = await self.get_association_by_id(association_id)
         await self.db.delete(association)
         await self.db.commit()
-    async def delete_association_from_object(self, object_id: uuid.UUID) -> None:
-        association = await self.get_associations_by_object(object_id)
-        await self.db.delete(association)
-        await self.db.commit()
