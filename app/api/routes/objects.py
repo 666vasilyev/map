@@ -96,7 +96,7 @@ async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(ge
     for category_id in object_data.categories:
         await AssociationRepository(db).create_association(
             object_id=object_db.id,
-            category_id=category_db.id
+            category_id=category_id
         )
     
     object_with_categories = await ObjectRepository(db).get_object_by_id(object_db.id)
