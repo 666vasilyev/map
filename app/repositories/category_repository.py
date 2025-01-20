@@ -31,6 +31,7 @@ class CategoryRepository:
         result = await self.db.execute(
             select(Category)
             .options(joinedload(Category.objects))
+            .options(joinedload(Category.children))
             .where(Category.id.in_(category_ids)))
         category = result.unique().scalars().all()
         return category
@@ -43,7 +44,11 @@ class CategoryRepository:
 
         # Предварительная загрузка родительской категории
         await self.db.execute(
-            select(Category).options(joinedload(Category.parent)).where(Category.id == category.id)
+            select(Category).options(
+                joinedload(Category.parent),
+                joinedload(Category.parent)
+            )
+            .where(Category.id == category.id)
         )
         return category
 
@@ -58,20 +63,15 @@ class CategoryRepository:
         await self.db.delete(category)
         await self.db.commit()
 
-    async def get_children_categories(self, parent_category: Category) -> List[Category]:
-        result = await self.db.execute(
-            select(Category)
-            .where(Category.parent_id == parent_category.id)
-        )
-        children = result.unique().scalars().all()
-        return children
     
-    async def get_all_categories_with_children(self):
+    async def get_all_categories_with_relationships(self):
         result = await self.db.execute(
             select(Category)
             .options(
-                joinedload(Category.objects),  # Предзагрузка объектов
-                joinedload(Category.children)  # Предзагрузка дочерних категорий
+                joinedload(Category.children), # Предзагрузка дочерних категорий
+                joinedload(Category.objects)  # Предзагрузка дочерних категорий
+
             )
         )
         return result.unique().scalars().all()
+    

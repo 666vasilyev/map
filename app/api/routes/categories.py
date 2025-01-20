@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -7,55 +9,54 @@ from app.repositories.category_repository import CategoryRepository
 from app.repositories.object_repository import ObjectRepository
 from app.repositories.association_repository import AssociationRepository
 
-
-from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
-from app.schemas.category_object import AllCategoryResponse, CategoryResponseWithObjects
-from app.schemas.object import ObjectResponse
+from app.schemas.category import (CategoryCreate, 
+                                  CategoryTreeResponse, 
+                                  CategoryUpdate, 
+                                  AllCategoryResponse,
+                                  CategoryResponse
+                                  )
+from app.schemas.object import ObjectSmallResponse
 
 from app.api.dependencies import get_db, get_current_category
-
-from app.api.routes.utils import map_category_with_objects
+from app.api.routes.utils import map_category
 
 router = APIRouter()
+logging.basicConfig(level=logging.INFO)
 
-@router.get("/", response_model=AllCategoryResponse)
-async def list_categories(db: AsyncSession = Depends(get_db)):
-    categories = await CategoryRepository(db).get_all_categories_with_children()
+@router.get("/tree", response_model=AllCategoryResponse)
+async def get_category_tree(db: AsyncSession = Depends(get_db)):
+    categories = await CategoryRepository(db).get_all_categories_with_relationships()
+
     if not categories:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categories not found")
 
     answers = []
     for category in categories:
-        # Gather all object IDs from the category's associations
-        ids_list = [object.object_id for object in category.objects]
-        ids = set(ids_list)
-
+    
         # Fetch all objects associated with the IDs
-        objects = await ObjectRepository(db).get_object_by_ids(ids)
+        objects = await ObjectRepository(db).get_all_objects()
 
         # Map categories and their objects using the utility function
-        category_to_return = map_category_with_objects(category, objects)
+        category_to_return = map_category(category, objects)
         answers.append(category_to_return)
 
-    return AllCategoryResponse(categories=answers)
+    cleaned_answers = [answer for answer in answers if answer.parent_id is None]
+    return AllCategoryResponse(categories=cleaned_answers)
 
 
-@router.get("/{category_id}", response_model=CategoryResponseWithObjects)
+@router.get("/{category_id}", response_model=CategoryResponse)
 async def get_category_by_id(
     db: AsyncSession = Depends(get_db),
     current_category: Category = Depends(get_current_category)
     ):
 
-    ids = [object.object_id for object in current_category.objects]
-    objects = await ObjectRepository(db).get_object_by_ids(ids)
-
-    category_to_return = map_category_with_objects(current_category, objects)
-    
-    return category_to_return
+    return current_category
 
 @router.post("/", response_model=CategoryResponse)
 async def create_category(category_data: CategoryCreate, db: AsyncSession = Depends(get_db)):
-    category = Category(name=category_data.name)
+    category = Category(
+        name=category_data.name
+        )
 
     # Устанавливаем родительскую категорию, если передан parent_id
     if category_data.parent_id:
@@ -68,8 +69,11 @@ async def create_category(category_data: CategoryCreate, db: AsyncSession = Depe
         return await CategoryRepository(db).create_category(category)
     except IntegrityError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category already exists")
+    except Exception as e:
+        logging.error(f"An error occurred while creating a category: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred while creating a category: {e}")
 
-@router.put("/{category_id}", response_model=CategoryResponse)
+@router.put("/{category_id}", response_model=CategoryTreeResponse)
 async def update_category(
     category_data: CategoryUpdate, 
     db: AsyncSession = Depends(get_db),

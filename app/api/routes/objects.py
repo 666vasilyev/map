@@ -62,7 +62,24 @@ async def get_object_by_id(
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
     ):
-    return current_object
+    ids_list = [category.category_id for category in current_object.categories]
+    ids = set(ids_list)
+    categories = await CategoryRepository(db).get_category_by_ids(ids)
+    return ObjectResponseWithCategories(
+                id=current_object.id,
+                x=current_object.x,
+                y=current_object.y,
+                name=current_object.name,
+                ownership=current_object.ownership,
+                area=current_object.area,
+                status=current_object.status,
+                links=current_object.links,
+                icon=current_object.icon,
+                image=current_object.image,
+                file_storage=current_object.file_storage,
+                description=current_object.description,
+                categories=[CategoryResponse.model_validate(category) for category in categories]
+            )
 
 @router.post("/", response_model=ObjectResponseWithCategories)
 async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(get_db)):
@@ -96,7 +113,7 @@ async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(ge
     for category_id in object_data.categories:
         await AssociationRepository(db).create_association(
             object_id=object_db.id,
-            category_id=category_id
+            category_id=category_db.id
         )
     
     object_with_categories = await ObjectRepository(db).get_object_by_id(object_db.id)
@@ -154,8 +171,10 @@ async def delete_object(
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
     ):
+
     for category in current_object.categories:
         await AssociationRepository(db).delete_association(category.id)
+
     await ObjectRepository(db).delete_object(current_object)
 
 

@@ -1,6 +1,8 @@
 from uuid import UUID
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+
+from app.schemas.object import ObjectSmallResponse
 
 class CategoryBase(BaseModel):
     name: str
@@ -11,12 +13,34 @@ class CategoryCreate(CategoryBase):
 
 class CategoryResponse(CategoryBase):
     id: UUID
-    parent: Optional["CategoryResponse"] = None  # Ссылка на родительскую категорию
 
     class Config:
         from_attributes = True
 
+
+class CategoryTreeResponse(CategoryBase):
+    id: UUID
+    parent_id: Optional[UUID] = None
+    objects: List  # Список объектов в категории
+
+    class Config:
+        from_attributes = True
+        exclude_none = True  # Убирает `parent_id`, если он None
+
+
+class AllCategoryResponse(BaseModel):
+    categories: List[CategoryTreeResponse]
+
+    class Config:
+        exclude_none = True
+
+
 class CategoryUpdate(BaseModel):
     name: str | None
 
-CategoryResponse.model_rebuild()
+class CategoryResponseWithObjects(CategoryBase):
+    id: UUID
+    objects: List[ObjectSmallResponse]
+
+    class Config:
+        from_attributes = True
