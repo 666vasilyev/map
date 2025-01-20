@@ -22,6 +22,7 @@ class CategoryRepository:
         result = await self.db.execute(
             select(Category)
             .options(joinedload(Category.objects))
+            .options(joinedload(Category.children))
             .where(Category.id == category_id))
         category = result.unique().scalar_one_or_none()
         return category
@@ -39,6 +40,11 @@ class CategoryRepository:
         self.db.add(category)
         await self.db.commit()
         await self.db.refresh(category)
+
+        # Предварительная загрузка родительской категории
+        await self.db.execute(
+            select(Category).options(joinedload(Category.parent)).where(Category.id == category.id)
+        )
         return category
 
     async def update_category(self, category: Category, updates: dict):
@@ -52,4 +58,20 @@ class CategoryRepository:
         await self.db.delete(category)
         await self.db.commit()
 
+    async def get_children_categories(self, parent_category: Category) -> List[Category]:
+        result = await self.db.execute(
+            select(Category)
+            .where(Category.parent_id == parent_category.id)
+        )
+        children = result.unique().scalars().all()
+        return children
     
+    async def get_all_categories_with_children(self):
+        result = await self.db.execute(
+            select(Category)
+            .options(
+                joinedload(Category.objects),  # Предзагрузка объектов
+                joinedload(Category.children)  # Предзагрузка дочерних категорий
+            )
+        )
+        return result.unique().scalars().all()

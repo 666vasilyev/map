@@ -102,7 +102,15 @@ class Category(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(nullable=False, unique=True)
-    
+
+    # Самореферентное отношение для родителя
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
+    parent: Mapped[Optional["Category"]] = relationship("Category", remote_side=[id], back_populates="children")
+
+    # Самореферентное отношение для дочерних категорий
+    children: Mapped[List["Category"]] = relationship("Category", back_populates="parent")
+
+    # Отношение с ObjectCategoryAssociation
     objects: Mapped[List["ObjectCategoryAssociation"]] = relationship(
         "ObjectCategoryAssociation", 
         back_populates="category", 

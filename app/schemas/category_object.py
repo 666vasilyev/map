@@ -8,6 +8,7 @@ from app.schemas.object import ObjectBase, ObjectResponse
 class CategoryResponseWithObjects(CategoryBase):
     id: UUID
     objects: List[ObjectResponse]
+    children: List["CategoryResponseWithObjects"]  # Список дочерних категорий
 
     class Config:
         from_attributes = True
@@ -29,3 +30,5 @@ class AllObjectsResponse(BaseModel):
 class ObjectCreate(ObjectBase):
     categories: list[UUID]
     pass
+
+CategoryResponseWithObjects.model_rebuild()

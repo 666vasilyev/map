@@ -14,33 +14,31 @@ from app.schemas.object import ObjectResponse
 
 from app.api.dependencies import get_db, get_current_category
 
+from app.api.routes.utils import map_category_with_objects
+
 router = APIRouter()
 
 @router.get("/", response_model=AllCategoryResponse)
 async def list_categories(db: AsyncSession = Depends(get_db)):
-    categories = await CategoryRepository(db).get_all_categories()
-    if categories:
-        
-        answers = []
-
-        for category in categories:
-
-            ids_list = [object.object_id for object in category.objects]
-            ids = set(ids_list)
-
-            objects = await ObjectRepository(db).get_object_by_ids(ids)
-
-            category_to_return = CategoryResponseWithObjects(
-                id=category.id,
-                name=category.name,
-                objects=[ObjectResponse.model_validate(object) for object in objects]
-            )
-
-            answers.append(category_to_return)
-
-        return AllCategoryResponse(categories=answers)
-    else:
+    categories = await CategoryRepository(db).get_all_categories_with_children()
+    if not categories:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categories not found")
+
+    answers = []
+    for category in categories:
+        # Gather all object IDs from the category's associations
+        ids_list = [object.object_id for object in category.objects]
+        ids = set(ids_list)
+
+        # Fetch all objects associated with the IDs
+        objects = await ObjectRepository(db).get_object_by_ids(ids)
+
+        # Map categories and their objects using the utility function
+        category_to_return = map_category_with_objects(category, objects)
+        answers.append(category_to_return)
+
+    return AllCategoryResponse(categories=answers)
+
 
 @router.get("/{category_id}", response_model=CategoryResponseWithObjects)
 async def get_category_by_id(
@@ -51,18 +49,21 @@ async def get_category_by_id(
     ids = [object.object_id for object in current_category.objects]
     objects = await ObjectRepository(db).get_object_by_ids(ids)
 
-    category_to_return = CategoryResponseWithObjects(
-        id=current_category.id,
-        name=current_category.name,
-        objects=[ObjectResponse.model_validate(object) for object in objects]
-    )
-
-
+    category_to_return = map_category_with_objects(current_category, objects)
+    
     return category_to_return
 
 @router.post("/", response_model=CategoryResponse)
 async def create_category(category_data: CategoryCreate, db: AsyncSession = Depends(get_db)):
     category = Category(name=category_data.name)
+
+    # Устанавливаем родительскую категорию, если передан parent_id
+    if category_data.parent_id:
+        parent_category = await CategoryRepository(db).get_category_by_id(category_data.parent_id)
+        if not parent_category:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent category not found")
+        category.parent = parent_category
+        
     try:
         return await CategoryRepository(db).create_category(category)
     except IntegrityError:
