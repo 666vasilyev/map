@@ -22,7 +22,8 @@ class ObjectCategoryAssociation(Base):
     
     category: Mapped["Category"] = relationship(
         "Category", 
-        back_populates="objects"
+        back_populates="objects",
+        lazy="joined"
     )
 
 
@@ -106,10 +107,18 @@ class Category(Base):
 
     # Самореферентное отношение для родителя
     parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
-    parent: Mapped[Optional["Category"]] = relationship("Category", remote_side=[id], back_populates="children")
+    parent: Mapped[Optional["Category"]] = relationship(
+        "Category", 
+        remote_side=[id], 
+        back_populates="children" 
+    )
 
     # Самореферентное отношение для дочерних категорий
-    children: Mapped[List["Category"]] = relationship("Category", back_populates="parent", lazy="joined")
+    children: Mapped[List["Category"]] = relationship(
+        "Category", 
+        back_populates="parent", 
+        lazy="joined"
+    )
 
     # Отношение с ObjectCategoryAssociation
     objects: Mapped[List["ObjectCategoryAssociation"]] = relationship(

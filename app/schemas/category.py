@@ -20,13 +20,10 @@ class CategoryResponse(CategoryBase):
 
 class CategoryTreeResponse(CategoryBase):
     id: UUID
-    parent_id: Optional[UUID] = None
     objects: List  # Список объектов в категории
 
     class Config:
         from_attributes = True
-        exclude_none = True  # Убирает `parent_id`, если он None
-
 
 class AllCategoryResponse(BaseModel):
     categories: List[CategoryTreeResponse]

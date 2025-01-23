@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from uuid import UUID
 from typing import List
 
@@ -12,6 +12,13 @@ class CategoryRepository:
         self.db = db
 
     async def get_all_categories(self):
+        result = await self.db.execute(
+            select(Category)
+            .options(joinedload(Category.objects))
+        )
+        return result.unique().scalars().all()
+    
+    async def get_children(self, category: Category):
         result = await self.db.execute(
             select(Category)
             .options(joinedload(Category.objects))
@@ -64,14 +71,14 @@ class CategoryRepository:
         await self.db.commit()
 
     
-    async def get_all_categories_with_relationships(self):
+    async def get_root_categories_with_relationships(self):
         result = await self.db.execute(
             select(Category)
             .options(
-                joinedload(Category.children), # Предзагрузка дочерних категорий
-                joinedload(Category.objects)  # Предзагрузка дочерних категорий
-
+                joinedload(Category.objects),
+                selectinload(Category.children, recursion_depth=-1)
             )
+            .where(Category.parent_id.is_(None))
         )
         return result.unique().scalars().all()
     

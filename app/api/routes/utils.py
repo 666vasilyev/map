@@ -1,16 +1,18 @@
-from typing import List
+import logging
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.category import CategoryTreeResponse
 from app.schemas.object import ObjectSmallResponse
-from app.db.models import Category, Object
+from app.db.models import Category
 
-def map_category(category: Category, objects: List[Object]) -> CategoryTreeResponse :
-    ids = {obj.object_id for obj in category.objects}
-    mapped_objects = [ObjectSmallResponse.model_validate(obj) for obj in objects if obj.id in ids]
+from app.repositories.category_repository import CategoryRepository
+
+def map_category(category: Category) -> CategoryTreeResponse :
+    objects = [ObjectSmallResponse.model_validate(object.object) for object in category.objects]
+
     return CategoryTreeResponse(
         id=category.id,
         name=category.name,
-        parent_id=category.parent_id,
-        objects=[map_category(child, objects) for child in category.children] + mapped_objects
+        objects=[map_category(child) for child in category.children] + objects
         )
 

@@ -25,23 +25,20 @@ logging.basicConfig(level=logging.INFO)
 
 @router.get("/tree", response_model=AllCategoryResponse)
 async def get_category_tree(db: AsyncSession = Depends(get_db)):
-    categories = await CategoryRepository(db).get_all_categories_with_relationships()
+
+    categories = await CategoryRepository(db).get_root_categories_with_relationships()
 
     if not categories:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categories not found")
 
     answers = []
     for category in categories:
-    
-        # Fetch all objects associated with the IDs
-        objects = await ObjectRepository(db).get_all_objects()
-
-        # Map categories and their objects using the utility function
-        category_to_return = map_category(category, objects)
+        # logging.info([child for child in category.children])
+        category_to_return = map_category(category)
         answers.append(category_to_return)
 
-    cleaned_answers = [answer for answer in answers if answer.parent_id is None]
-    return AllCategoryResponse(categories=cleaned_answers)
+    # cleaned_answers = [answer for answer in answers if answer.parent_id is None]
+    return AllCategoryResponse(categories=answers)
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
