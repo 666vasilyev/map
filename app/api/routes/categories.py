@@ -6,7 +6,6 @@ from sqlalchemy.exc import IntegrityError
 
 from app.db.models import Category
 from app.repositories.category_repository import CategoryRepository
-from app.repositories.object_repository import ObjectRepository
 from app.repositories.association_repository import AssociationRepository
 
 from app.schemas.category import (CategoryCreate, 
@@ -15,7 +14,6 @@ from app.schemas.category import (CategoryCreate,
                                   AllCategoryResponse,
                                   CategoryResponse
                                   )
-from app.schemas.object import ObjectSmallResponse
 
 from app.api.dependencies import get_db, get_current_category
 from app.api.routes.utils import map_category
@@ -33,11 +31,9 @@ async def get_category_tree(db: AsyncSession = Depends(get_db)):
 
     answers = []
     for category in categories:
-        # logging.info([child for child in category.children])
         category_to_return = map_category(category)
         answers.append(category_to_return)
 
-    # cleaned_answers = [answer for answer in answers if answer.parent_id is None]
     return AllCategoryResponse(categories=answers)
 
 
