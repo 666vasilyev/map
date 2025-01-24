@@ -1,15 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 from uuid import UUID
+from typing import List
 
 from app.db.session import async_session
 from app.repositories.chain_repository import ChainRepository
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.object_repository import ObjectRepository
 from app.repositories.product_repository import ProductRepository
-from app.repositories.association_repository import AssociationRepository
+from app.repositories.product_category_association_repository import AssociationRepository
+from app.repositories.project_repository import ProjectRepository
 
-from app.db.models import Chain, Category, Object, Product, ObjectCategoryAssociation
+from app.db.models import Chain, Category, Object, Product, ProductCategoryAssociation, Project
 
 
 async def get_db() -> AsyncSession:
@@ -57,12 +59,30 @@ async def get_current_product(product_id: UUID, db: AsyncSession = Depends(get_d
     else:
         return current_product
     
-async def get_current_association(association_id: UUID, db: AsyncSession = Depends(get_db)):
-    current_association = await AssociationRepository(db).get_association_by_id(association_id)
-    if not current_association:
+async def get_associations_by_current_product(
+        product: Product, 
+        db: AsyncSession = Depends(get_db)
+    ) -> List[ProductCategoryAssociation]:
+    
+    current_associations = await AssociationRepository(db).get_associations_by_product(product)
+    if not current_associations:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Association not found"
         )
     else:
-        return current_association
+        return current_associations
+
+async def get_current_project(
+        project_id: UUID, 
+        db: AsyncSession = Depends(get_db)
+    ) -> Project:
+    
+    current_project = await ProjectRepository(db).get_project_by_id(project_id)
+    if not current_project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    else:
+        return current_project

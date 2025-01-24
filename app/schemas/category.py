@@ -2,8 +2,6 @@ from uuid import UUID
 from pydantic import BaseModel
 from typing import Optional, List
 
-from app.schemas.object import ObjectSmallResponse
-
 class CategoryBase(BaseModel):
     name: str
 
@@ -17,16 +15,8 @@ class CategoryResponse(CategoryBase):
     class Config:
         from_attributes = True
 
-
-class CategoryTreeResponse(CategoryBase):
-    id: UUID
-    objects: List  # Список объектов в категории
-
-    class Config:
-        from_attributes = True
-
 class AllCategoryResponse(BaseModel):
-    categories: List[CategoryTreeResponse]
+    categories: List[CategoryResponse]
 
     class Config:
         exclude_none = True
@@ -35,9 +25,3 @@ class AllCategoryResponse(BaseModel):
 class CategoryUpdate(BaseModel):
     name: str | None
 
-class CategoryResponseWithObjects(CategoryBase):
-    id: UUID
-    objects: List[ObjectSmallResponse]
-
-    class Config:
-        from_attributes = True

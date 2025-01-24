@@ -7,22 +7,44 @@ from sqlalchemy.dialects.postgresql import UUID
 class Base(DeclarativeBase):
     pass
 
-class ObjectCategoryAssociation(Base):
-    __tablename__ = "object_category_association"
+class ProductCategoryAssociation(Base):
+    __tablename__ = "product_category_association"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
-    object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id"))
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"))
     category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("categories.id"))
 
-    object: Mapped["Object"] = relationship(
-        "Object", 
+    product: Mapped["Product"] = relationship(
+        "Product", 
         back_populates="categories",
         lazy="joined"
     )
     
     category: Mapped["Category"] = relationship(
         "Category", 
-        back_populates="objects",
+        back_populates="products",
+        lazy="joined"
+    )
+
+class ProjectCategoryAssociation(Base):
+    __tablename__ = "project_category_association"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False)
+    category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("categories.id"), nullable=False)
+
+    # Связь с Project
+    project: Mapped["Project"] = relationship(
+        "Project", 
+        back_populates="categories", 
+        lazy="joined"
+    )
+
+    # Связь с Category
+    category: Mapped["Category"] = relationship(
+        "Category", 
+        back_populates="projects", 
         lazy="joined"
     )
 
@@ -73,10 +95,6 @@ class Object(Base):
         foreign_keys="[Chain.source_object_id]"
     )
 
-    categories: Mapped[List["ObjectCategoryAssociation"]] = relationship(
-        "ObjectCategoryAssociation", 
-        back_populates="object"
-    )
 
 class Product(Base):
     __tablename__ = "products"
@@ -85,6 +103,9 @@ class Product(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[Optional[str]] = mapped_column(nullable=True)
     image: Mapped[Optional[str]] = mapped_column(nullable=True)
+
+    country: Mapped[str] = mapped_column(nullable=True, default=None)
+    
     object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id"), nullable=True)
 
     # Связь с объектом
@@ -99,6 +120,13 @@ class Product(Base):
         back_populates="product"
     )
 
+    categories: Mapped[List["ProductCategoryAssociation"]] = relationship(
+        "ProductCategoryAssociation", 
+        back_populates="product",
+        cascade="all, delete-orphan"  # Указание каскадного удаления
+    )
+
+
 class Category(Base):
     __tablename__ = "categories"
 
@@ -107,6 +135,7 @@ class Category(Base):
 
     # Самореферентное отношение для родителя
     parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
+
     parent: Mapped[Optional["Category"]] = relationship(
         "Category", 
         remote_side=[id], 
@@ -120,9 +149,30 @@ class Category(Base):
         lazy="joined"
     )
 
-    # Отношение с ObjectCategoryAssociation
-    objects: Mapped[List["ObjectCategoryAssociation"]] = relationship(
-        "ObjectCategoryAssociation", 
+    # Отношение с ProductCategoryAssociation
+    products: Mapped[List["ProductCategoryAssociation"]] = relationship(
+        "ProductCategoryAssociation", 
         back_populates="category", 
         lazy="joined"
     )
+
+    projects: Mapped[List["ProjectCategoryAssociation"]] = relationship(
+        "ProjectCategoryAssociation",
+        back_populates="category",
+        lazy="joined"
+    )
+
+
+class Project(Base):
+    __tablename__ = "projects"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(nullable=True)
+
+    categories: Mapped[List["ProjectCategoryAssociation"]] = relationship(
+        "ProjectCategoryAssociation",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="joined"
+    )
+

@@ -6,35 +6,18 @@ from sqlalchemy.exc import IntegrityError
 
 from app.db.models import Category
 from app.repositories.category_repository import CategoryRepository
-from app.repositories.association_repository import AssociationRepository
+from app.repositories.product_category_association_repository import AssociationRepository
 
-from app.schemas.category import (CategoryCreate, 
-                                  CategoryTreeResponse, 
-                                  CategoryUpdate, 
-                                  AllCategoryResponse,
-                                  CategoryResponse
-                                  )
+from app.schemas.category import (
+    CategoryCreate, 
+    CategoryResponse, 
+    CategoryUpdate, 
+)
 
 from app.api.dependencies import get_db, get_current_category
-from app.api.routes.utils import map_category
 
 router = APIRouter()
 logging.basicConfig(level=logging.INFO)
-
-@router.get("/tree", response_model=AllCategoryResponse)
-async def get_category_tree(db: AsyncSession = Depends(get_db)):
-
-    categories = await CategoryRepository(db).get_root_categories_with_relationships()
-
-    if not categories:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categories not found")
-
-    answers = []
-    for category in categories:
-        category_to_return = map_category(category)
-        answers.append(category_to_return)
-
-    return AllCategoryResponse(categories=answers)
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
@@ -66,7 +49,7 @@ async def create_category(category_data: CategoryCreate, db: AsyncSession = Depe
         logging.error(f"An error occurred while creating a category: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred while creating a category: {e}")
 
-@router.put("/{category_id}", response_model=CategoryTreeResponse)
+@router.put("/{category_id}", response_model=CategoryResponse)
 async def update_category(
     category_data: CategoryUpdate, 
     db: AsyncSession = Depends(get_db),
@@ -81,8 +64,8 @@ async def delete_category(
     current_category: Category = Depends(get_current_category),
     db: AsyncSession = Depends(get_db)
     ):
-    for object in current_category.objects:
-        await AssociationRepository(db).delete_association(object.id)
+    for product in current_category.products:
+        await AssociationRepository(db).delete_association(product.id)
 
     await CategoryRepository(db).delete_category(current_category)
        

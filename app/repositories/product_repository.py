@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from uuid import UUID
+from typing import List
 
 from app.db.models import Product
 
@@ -16,6 +17,10 @@ class ProductRepository:
         result = await self.db.execute(select(Product).where(Product.id == product_id))
         product = result.scalar_one_or_none()
         return product
+    
+    async def get_products_by_ids(self, ids: List[UUID]):
+        result = await self.db.execute(select(Product).where(Product.id.in_(ids)))
+        return result.scalars().all()
 
     async def create_product(self, product: Product):
         self.db.add(product)

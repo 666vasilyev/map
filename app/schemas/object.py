@@ -17,6 +17,10 @@ class ObjectBase(BaseModel):
     file_storage: Optional[str]
     description: Optional[str]
 
+class ObjectCreate(ObjectBase):
+    pass
+
+
 class ObjectSmallResponse(BaseModel):
     id: UUID
     name: str
@@ -46,3 +50,6 @@ class ObjectUpdate(BaseModel):
     image: Optional[str]
     file_storage: Optional[str]
     description: Optional[str]
+
+class AllObjectsResponse(BaseModel):
+    objects: List[ObjectResponse]

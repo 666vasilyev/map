@@ -14,34 +14,31 @@ class CategoryRepository:
     async def get_all_categories(self):
         result = await self.db.execute(
             select(Category)
-            .options(joinedload(Category.objects))
+            .options(joinedload(Category.products))
         )
         return result.unique().scalars().all()
     
-    async def get_children(self, category: Category):
+    async def get_category_by_id(self, category_id: UUID):
         result = await self.db.execute(
             select(Category)
-            .options(joinedload(Category.objects))
+            .options(
+                joinedload(Category.products),
+                selectinload(Category.children, recursion_depth=-1)
+            )
+            .where(Category.id == category_id)
         )
-        return result.unique().scalars().all()
-
-    async def get_category_by_id(self, category_id: UUID) -> Category | None:
-        result = await self.db.execute(
-            select(Category)
-            .options(joinedload(Category.objects))
-            .options(joinedload(Category.children))
-            .where(Category.id == category_id))
-        category = result.unique().scalar_one_or_none()
-        return category
+        return result.unique().scalar_one_or_none()
     
     async def get_category_by_ids(self, category_ids: list[UUID]) -> List[Category] | None:
         result = await self.db.execute(
             select(Category)
-            .options(joinedload(Category.objects))
-            .options(joinedload(Category.children))
+            .options(
+                joinedload(Category.products),
+                joinedload(Category.projects),  # Указываем связь projects для ассоциаций
+                selectinload(Category.children, recursion_depth=-1)
+            )
             .where(Category.id.in_(category_ids)))
-        category = result.unique().scalars().all()
-        return category
+        return result.unique().scalars().all()
     
 
     async def create_category(self, category: Category):
@@ -53,7 +50,6 @@ class CategoryRepository:
         await self.db.execute(
             select(Category).options(
                 joinedload(Category.parent),
-                joinedload(Category.parent)
             )
             .where(Category.id == category.id)
         )
@@ -75,7 +71,7 @@ class CategoryRepository:
         result = await self.db.execute(
             select(Category)
             .options(
-                joinedload(Category.objects),
+                joinedload(Category.products),
                 selectinload(Category.children, recursion_depth=-1)
             )
             .where(Category.parent_id.is_(None))

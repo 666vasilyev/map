@@ -46,10 +46,14 @@ async def get_chains_by_product_id(product_id: UUID, db: AsyncSession = Depends(
 async def create_chain(chain_data: ChainCreate, db: AsyncSession = Depends(get_db)):
 
     # TODO: сделать обработчик ошибки для каждого объекта
-    source_object = await ObjectRepository(db).get_object_by_id(chain_data.source_object_id)
-    target_object = await ObjectRepository(db).get_object_by_id(chain_data.target_object_id)
+    objects = await ObjectRepository(db).get_object_by_ids(
+        [
+            chain_data.source_object_id,
+            chain_data.target_object_id
+        ]
+    )
 
-    if not source_object or not target_object:
+    if len(objects) < 2:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Source or target object not found"
