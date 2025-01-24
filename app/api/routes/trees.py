@@ -40,7 +40,7 @@ async def get_tree_by_id(
     db: AsyncSession = Depends(get_db)
     ):
 
-    category_to_return = map_category(category)
+    category_to_return = map_all_category(category)
 
     return category_to_return
 
@@ -58,7 +58,7 @@ async def get_tree_by_project(
     categories = await CategoryRepository(db).get_category_by_ids(category_ids)
 
     # Построение дерева категорий
-    tree = [map_category(category) for category in categories]
+    tree = [map_all_category(category) for category in categories]
 
     return AllTreeResponse(categories=tree)
 

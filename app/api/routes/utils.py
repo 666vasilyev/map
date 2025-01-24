@@ -27,7 +27,7 @@ def apply_filters(products: List[Product], filters: FilterModel) -> List[Product
             filters.name is None or filters.name in product.name,
             filters.description is None or (product.description and filters.description in product.description),
             filters.image is None or (product.image and filters.image in product.image),
-            filters.country is None or (product.object and filters.country in product.object.ownership)
+            filters.country is None or (product.country and filters.country in product.country)
         ])
 
     return [product for product in products if matches(product)]
