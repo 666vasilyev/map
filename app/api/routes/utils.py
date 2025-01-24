@@ -1,3 +1,5 @@
+import logging
+
 from typing import List, Optional
 
 from app.schemas.tree import TreeResponse
@@ -6,25 +8,15 @@ from app.db.models import Category, Product
 from app.schemas.filter import FilterModel
 
 
-# def apply_filters(products: List[Product], filters: FilterModel) -> List[Product]:
-#     """
-#     Применяет фильтры к списку продуктов.
-#     """
-#     filtered_products = []
+def map_all_category(category: Category) -> TreeResponse:
 
-#     for product in products:
-#         if filters.name and filters.name.lower() not in product.name.lower():
-#             continue
-#         if filters.description and (not product.description or filters.description.lower() not in product.description.lower()):
-#             continue
-#         if filters.image and (not product.image or filters.image.lower() not in product.image.lower()):
-#             continue
-#         if filters.country and (not product.object or filters.country.lower() not in product.object.country.lower()):
-#             continue
+    products = [ProductResponse.model_validate(product.product) for product in category.products]
 
-#         filtered_products.append(product)
-
-#     return filtered_products
+    return TreeResponse(
+        id=category.id,
+        name=category.name,
+        objects=[map_all_category(child) for child in category.children] + products
+        )
 
 def apply_filters(products: List[Product], filters: FilterModel) -> List[Product]:
     """

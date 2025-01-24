@@ -34,4 +34,4 @@ celerybeat-schedule.db
 test_email.py
 postgres_data
 redis_data
-.env
+*.env

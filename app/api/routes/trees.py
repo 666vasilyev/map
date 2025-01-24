@@ -13,7 +13,7 @@ from app.schemas.tree import (
 
 from app.schemas.filter import FilterModel
 from app.api.dependencies import get_db, get_current_category, get_current_project
-from app.api.routes.utils import map_category
+from app.api.routes.utils import map_category, map_all_category
 
 router = APIRouter()
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +28,7 @@ async def get_tree(db: AsyncSession = Depends(get_db)):
 
     answers = []
     for category in categories:
-        category_to_return = map_category(category)
+        category_to_return = map_all_category(category)
         answers.append(category_to_return)
 
     return AllTreeResponse(categories=answers)
@@ -83,9 +83,3 @@ async def get_tree_by_project_with_filters(
 
     # Возвращаем дерево
     return AllTreeResponse(categories=filtered_tree)
-
-# 3dd6da6e-c6e8-4ece-8734-28e788d8aefc
-
-{
-  "name": "БПЛА АН-196 Лютый"
-}
