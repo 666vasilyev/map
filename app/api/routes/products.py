@@ -49,6 +49,7 @@ async def create_product(product_data: ProductCreate, db: AsyncSession = Depends
         name=product_data.name,
         description=product_data.description,
         image=product_data.image,
+        country=product_data.country,
     )
 
     product = await ProductRepository(db).create_product(product)
