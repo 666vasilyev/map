@@ -2,8 +2,6 @@ from pydantic import BaseModel
 from uuid import UUID
 from typing import Optional, List
 
-from app.schemas.category import CategoryResponse
-
 
 class ProjectBase(BaseModel):
     name: str
@@ -11,8 +9,7 @@ class ProjectBase(BaseModel):
 
 
 class ProjectCreate(ProjectBase):
-    category_ids: Optional[List[UUID]] = None
-
+    pass
 
 class ProjectUpdate(ProjectBase):
     pass

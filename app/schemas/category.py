@@ -7,7 +7,10 @@ class CategoryBase(BaseModel):
 
 class CategoryCreate(CategoryBase):
     parent_id: Optional[UUID] = None  # Добавляем поле для родительской категории
+    project_id: UUID
 
+class CategoryCreateV2(CategoryBase):
+    id: Optional[UUID] = None
 
 class CategoryResponse(CategoryBase):
     id: UUID
@@ -23,5 +26,5 @@ class AllCategoryResponse(BaseModel):
 
 
 class CategoryUpdate(BaseModel):
-    name: str | None
+    name: Optional[str] = None
 

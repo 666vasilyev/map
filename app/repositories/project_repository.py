@@ -29,14 +29,11 @@ class ProjectRepository:
         )
         return result.unique().scalar_one_or_none()
 
-    async def create_project(self, project: Project, category_ids: List[UUID]) -> Project:
+    async def create_project(self, project: Project) -> Project:
         """Создать проект и ассоциации."""
         self.db.add(project)
         await self.db.commit()
         await self.db.refresh(project)
-
-        if category_ids:
-            await self.association_repo.create_associations(project.id, category_ids)
 
         return project
 

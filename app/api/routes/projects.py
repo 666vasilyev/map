@@ -37,14 +37,8 @@ async def create_project(
 ):
     """Создать новый проект."""
     new_project = Project(name=project_data.name, description=project_data.description)
-    created_project = await ProjectRepository(db).create_project(new_project, project_data.category_ids)
-
-
-    return ProjectResponse(
-        id=created_project.id,
-        name=created_project.name,
-        description=created_project.description,
-    )
+    created_project = await ProjectRepository(db).create_project(new_project)
+    return created_project
 
 
 @router.put("/{project_id}", response_model=ProjectResponse)

@@ -58,9 +58,10 @@ async def get_tree_by_project(
     categories = await CategoryRepository(db).get_category_by_ids(category_ids)
 
     # Построение дерева категорий
-    tree = [map_all_category(category) for category in categories]
+    trees = [map_all_category(category) for category in categories]
 
-    return AllTreeResponse(categories=tree)
+
+    return AllTreeResponse(categories=trees)
 
 
 @router.post("/project/{project_id}/filtered", response_model=AllTreeResponse)
