@@ -44,17 +44,11 @@ class ProjectRepository:
         await self.db.commit()
 
     async def update_project(
-        self, project: Project, updates: dict, category_ids: List[UUID]
-    ) -> Project:
+        self, project: Project, updates: dict) -> Project:
         """Обновить проект и его ассоциации."""
         for key, value in updates.items():
             setattr(project, key, value)
         await self.db.commit()
         await self.db.refresh(project)
-
-        # Обновляем ассоциации
-        await self.association_repo.delete_associations_by_project(project.id)
-        if category_ids:
-            await self.association_repo.create_associations(project.id, category_ids)
 
         return project

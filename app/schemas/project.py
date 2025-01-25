@@ -12,7 +12,8 @@ class ProjectCreate(ProjectBase):
     pass
 
 class ProjectUpdate(ProjectBase):
-    pass
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 class ProjectResponse(ProjectBase):
     id: UUID
