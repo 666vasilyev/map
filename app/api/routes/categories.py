@@ -116,11 +116,6 @@ async def delete_category(
     current_category: Category = Depends(get_current_category),
     db: AsyncSession = Depends(get_db)
     ):
-    for product in current_category.products:
-        await AssociationRepository(db).delete_association(product.id)
-
-    for project in current_category.projects:
-        await ProjectCategoryAssociationRepository(db).delete_associations_by_project(project.id)
 
     await CategoryRepository(db).delete_category(current_category)
        

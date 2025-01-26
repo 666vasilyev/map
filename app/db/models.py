@@ -153,13 +153,15 @@ class Category(Base):
     products: Mapped[List["ProductCategoryAssociation"]] = relationship(
         "ProductCategoryAssociation", 
         back_populates="category", 
-        lazy="joined"
+        lazy="joined",
+        cascade="all, delete-orphan"  # Указание каскадного удаления
     )
 
     projects: Mapped[List["ProjectCategoryAssociation"]] = relationship(
         "ProjectCategoryAssociation",
         back_populates="category",
-        lazy="joined"
+        lazy="joined",
+        cascade="all, delete-orphan"  # Указание каскадного удаления
     )
 
 
