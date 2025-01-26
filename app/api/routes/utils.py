@@ -1,11 +1,11 @@
-import logging
-
 from typing import List, Optional
+from uuid import UUID
 
 from app.schemas.tree import TreeResponse
 from app.schemas.product import ProductResponse
-from app.db.models import Category, Product
 from app.schemas.filter import FilterModel
+from app.schemas.object import ObjectCoordinates, ObjectChainResponse, AllObjectChainResponse
+from app.db.models import Category, Product, Object
 
 
 def map_all_category(category: Category) -> TreeResponse:
@@ -79,3 +79,37 @@ def collect_filtered_products(category: Category, filters: Optional[FilterModel]
         products_response.extend(collect_filtered_products(child, filters))
 
     return products_response
+
+
+def map_objects(objects: List[Object], product_id: UUID) -> AllObjectChainResponse:
+    """
+    Маппит список SQLAlchemy объектов в Pydantic модели ObjectResponse.
+
+    :param objects: Список объектов SQLAlchemy модели Object.
+    :return: Список объектов Pydantic модели ObjectResponse.
+    """
+    mapped_objects = []
+
+    for obj in objects:
+        chains = []
+        for chain in obj.chains_source:
+            if chain.product_id == product_id:
+                chains.append(
+                    ObjectCoordinates(
+                        id=chain.target_object.id,
+                        x=chain.target_object.x,
+                        y=chain.target_object.y,
+                    )
+                )
+        mapped_object = ObjectChainResponse(
+            x=obj.x,
+            y=obj.y,
+            id=obj.id,
+            name=obj.name,
+            icon=obj.icon,
+            description=obj.description,
+            chains=chains,
+        )
+        mapped_objects.append(mapped_object)
+
+    return mapped_objects

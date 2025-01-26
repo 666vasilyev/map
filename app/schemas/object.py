@@ -22,6 +22,8 @@ class ObjectCreate(ObjectBase):
 
 
 class ObjectSmallResponse(BaseModel):
+    x: float
+    y: float
     id: UUID
     name: str
     icon: Optional[str]
@@ -53,3 +55,16 @@ class ObjectUpdate(BaseModel):
 
 class AllObjectsResponse(BaseModel):
     objects: List[ObjectResponse]
+
+
+class ObjectCoordinates(BaseModel):
+    x: float
+    y: float
+    id: UUID
+
+
+class ObjectChainResponse(ObjectSmallResponse):
+    chains: Optional[List[ObjectCoordinates]] = None
+
+class AllObjectChainResponse(BaseModel):
+    objects: List[ObjectChainResponse]

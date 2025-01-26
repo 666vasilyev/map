@@ -7,8 +7,10 @@ from app.repositories.object_repository import ObjectRepository
 from app.repositories.product_repository import ProductRepository
 
 from app.schemas.chain import ChainCreate, ChainResponse, AllChainResponse, ChainUpdate, ChainsByProductResponse
+from app.schemas.object import ObjectChainResponse, AllObjectChainResponse
 from app.db.models import Chain
 from app.api.dependencies import get_db, get_current_chain
+from app.api.routes.utils import map_objects
 
 router = APIRouter()
 
@@ -41,6 +43,25 @@ async def get_chains_by_product_id(product_id: UUID, db: AsyncSession = Depends(
     # Получить цепочки для продукта
     chains = await ChainRepository(db).get_chains_by_product_id(product_id)
     return {"product_id": product_id, "chains": chains}
+
+
+@router.get("/objects/by_product/{product_id}", response_model=AllObjectChainResponse)
+async def get_object_by_product_id(
+    product_id: UUID,
+    db: AsyncSession = Depends(get_db)
+    ):
+
+    objects = await ChainRepository(db).get_objects_by_product_id(product_id)
+    if not objects:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No objects found for this product"
+        )
+    
+    objects_to_return = map_objects(objects, product_id)
+    return AllObjectChainResponse(objects=objects_to_return)
+
+
 
 @router.post("/", response_model=ChainResponse)
 async def create_chain(chain_data: ChainCreate, db: AsyncSession = Depends(get_db)):

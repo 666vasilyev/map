@@ -63,6 +63,10 @@ class Chain(Base):
         "Object", back_populates="chains_source", foreign_keys=[source_object_id]
     )
 
+    target_object: Mapped["Object"] = relationship(
+        "Object", back_populates="chains_target", foreign_keys=[target_object_id], lazy='joined'
+    )
+
     product: Mapped["Product"] = relationship(
         "Product", back_populates="chains", foreign_keys=[product_id]
     )
@@ -92,7 +96,16 @@ class Object(Base):
     chains_source: Mapped[List["Chain"]] = relationship(
         "Chain", 
         back_populates="source_object", 
-        foreign_keys="[Chain.source_object_id]"
+        foreign_keys="[Chain.source_object_id]",
+        lazy='joined'
+    )
+
+    # Цепочки, где объект потребитель
+    chains_target: Mapped[List["Chain"]] = relationship(
+        "Chain", 
+        back_populates="target_object", 
+        foreign_keys="[Chain.target_object_id]",
+        lazy='joined'
     )
 
 

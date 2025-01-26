@@ -1,9 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload
 from uuid import UUID
 from typing import List
 
-from app.db.models import Chain
+from app.db.models import Chain, Object
 
 class ChainRepository:
     def __init__(self, db: AsyncSession):
@@ -11,7 +12,7 @@ class ChainRepository:
 
     async def get_all_chains(self):
         result = await self.db.execute(select(Chain))
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     async def get_chain_by_id(self, chain_id: UUID):
         result = await self.db.execute(select(Chain).where(Chain.id == chain_id))
@@ -22,8 +23,22 @@ class ChainRepository:
             select(Chain)
             .where((Chain.product_id == product_id))
         )
-        return result.scalars().all()
+        return result.unique().scalars().all()
     
+    async def get_objects_by_product_id(self, product_id: UUID) -> List[Object]:
+        """
+        Получает список объектов, связанных с продуктом через цепочки.
+        
+        :param product_id: UUID продукта
+        :return: Список объектов (List[Object])
+        """
+        result = await self.db.execute(
+            select(Object)
+            .join(Chain, (Chain.source_object_id == Object.id) | (Chain.target_object_id == Object.id))
+            .where(Chain.product_id == product_id)
+            .options(joinedload(Object.products), joinedload(Object.chains_source))
+        )
+        return result.unique().scalars().all()
 
     async def create_chain(self, chain: Chain):
         self.db.add(chain)
