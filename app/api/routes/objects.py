@@ -213,7 +213,7 @@ async def get_object_files(
     return {"files": file_list}
 
 
-@router.get("/objects/{object_id}/files/{file_name}", response_class=FileResponse)
+@router.get("/{object_id}/files/{file_name}", response_class=FileResponse)
 async def get_object_file(
     file_name: str,
     current_object: Object = Depends(get_current_object),
