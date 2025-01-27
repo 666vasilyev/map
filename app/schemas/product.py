@@ -1,12 +1,12 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uuid import UUID
 from typing import List, Optional
 
 class ProductBase(BaseModel):
     name: str
-    description: str | None
-    image: str | None
-    country: str | None
+    description: Optional[str] = None
+    image: Optional[str] = None
+    country: Optional[str] = None
 
 class ProductCreate(ProductBase):
     categories: List[UUID]

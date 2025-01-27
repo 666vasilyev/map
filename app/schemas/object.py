@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List
 from uuid import UUID
 
@@ -14,8 +14,8 @@ class ObjectBase(BaseModel):
     links: Optional[str]
     icon: Optional[str]
     image: Optional[str]
-    file_storage: Optional[str]
-    description: Optional[str]
+    file_storage: Optional[str] = None
+    description: Optional[str] = None
 
 class ObjectCreate(ObjectBase):
     pass
@@ -26,8 +26,8 @@ class ObjectSmallResponse(BaseModel):
     y: float
     id: UUID
     name: str
-    icon: Optional[str]
-    description: Optional[str]
+    icon: Optional[str] = None
+    description: Optional[str] = None
 
     class Config:
         from_attributes = True
