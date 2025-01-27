@@ -80,7 +80,7 @@ async def delete_object(
 
 
 
-@router.post("/objects/{object_id}/image", status_code=status.HTTP_201_CREATED)
+@router.post("/{object_id}/image", status_code=status.HTTP_201_CREATED)
 async def upload_object_image(
     file: UploadFile = File(...),
     object: Object = Depends(get_current_object),
@@ -105,7 +105,7 @@ async def upload_object_image(
     return {"detail": "Image uploaded successfully", "path": file_path}
 
 
-@router.post("/objects/{object_id}/files", status_code=status.HTTP_201_CREATED)
+@router.post("/{object_id}/files", status_code=status.HTTP_201_CREATED)
 async def upload_object_files(
     files: List[UploadFile] = File(...),
     object: Object = Depends(get_current_object),
@@ -132,7 +132,7 @@ async def upload_object_files(
 
 
 
-@router.delete("/objects/{object_id}/image", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{object_id}/image", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_object_image(
     obj: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
@@ -150,7 +150,7 @@ async def delete_object_image(
     return {"detail": "Object image deleted successfully"}
 
 
-@router.delete("/objects/{object_id}/files", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{object_id}/files", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_object_files(
     obj: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
@@ -170,7 +170,7 @@ async def delete_object_files(
 
 
 
-@router.get("/objects/{object_id}/image", response_class=FileResponse)
+@router.get("/{object_id}/image", response_class=FileResponse)
 async def get_object_image(
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
@@ -188,7 +188,7 @@ async def get_object_image(
     return FileResponse(image_path, media_type="image/jpeg")
 
 
-@router.get("/objects/{object_id}/files")
+@router.get("/{object_id}/files")
 async def get_object_files(
     current_object: Object = Depends(get_current_object),
 ):

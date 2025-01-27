@@ -90,7 +90,7 @@ async def delete_product(
     return {"detail": "Product deleted"}
 
 
-@router.post("/project/{project_id}/filtered", response_model=AllProductResponse)
+@router.post("/{project_id}/filtered", response_model=AllProductResponse)
 async def get_filtered_products_by_project(
     filters: FilterModel,
     current_project: Product = Depends(get_current_project),
@@ -109,7 +109,7 @@ async def get_filtered_products_by_project(
     return AllProductResponse(products=filtered_products)
 
 
-@router.post("/products/{product_id}/image", status_code=status.HTTP_201_CREATED)
+@router.post("/{product_id}/image", status_code=status.HTTP_201_CREATED)
 async def upload_product_image(
     file: UploadFile = File(...),
     product: Product = Depends(get_current_product),
@@ -133,7 +133,7 @@ async def upload_product_image(
 
 
 
-@router.delete("/products/{product_id}/image", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{product_id}/image", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product_image(
     product: Product = Depends(get_current_product),
     db: AsyncSession = Depends(get_db)
@@ -152,7 +152,7 @@ async def delete_product_image(
 
 
 
-@router.get("/products/{product_id}/image", response_class=FileResponse)
+@router.get("/{product_id}/image", response_class=FileResponse)
 async def get_product_image(
     current_product: Product = Depends(get_current_product),
 ):
