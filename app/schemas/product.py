@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 from typing import List, Optional
 
@@ -29,3 +29,4 @@ class ProductUpdate(BaseModel):
 
 class ProductIds(BaseModel):
     ids: List[UUID]
+

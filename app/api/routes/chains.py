@@ -7,7 +7,7 @@ from app.repositories.object_repository import ObjectRepository
 from app.repositories.product_repository import ProductRepository
 
 from app.schemas.chain import ChainCreate, ChainResponse, AllChainResponse, ChainUpdate, ChainsByProductResponse
-from app.schemas.object import ObjectChainResponse, AllObjectChainResponse
+from app.schemas.object import AllObjectChainResponse
 from app.db.models import Chain
 from app.api.dependencies import get_db, get_current_chain
 from app.api.routes.utils import map_objects

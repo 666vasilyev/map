@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
+from pathlib import Path
+
 
 class Settings(BaseSettings):
     # Настройки базы данных
@@ -12,6 +14,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     DEBUG: bool
+    STORAGE_DIR: Path
 
     @property
     def ASYNC_DATABASE_URL(self) -> str:

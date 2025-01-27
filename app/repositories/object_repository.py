@@ -45,3 +45,21 @@ class ObjectRepository:
     async def delete_object(self, obj: Object):
         await self.db.delete(obj)
         await self.db.commit()
+
+    async def update_image(self, obj: Object, image_path: str| None) -> Object:
+        """
+        Обновляет путь к изображению для объекта.
+        """
+        obj.image = image_path
+        await self.db.commit()
+        await self.db.refresh(obj)
+        return obj
+
+    async def update_file_storage(self, obj: Object, file_storage_path: str | None) -> Object:
+        """
+        Обновляет путь к файловому хранилищу для объекта.
+        """
+        obj.file_storage = file_storage_path
+        await self.db.commit()
+        await self.db.refresh(obj)
+        return obj

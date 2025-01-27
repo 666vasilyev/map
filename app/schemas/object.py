@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from uuid import UUID
 
@@ -68,3 +68,4 @@ class ObjectChainResponse(ObjectSmallResponse):
 
 class AllObjectChainResponse(BaseModel):
     objects: List[ObjectChainResponse]
+

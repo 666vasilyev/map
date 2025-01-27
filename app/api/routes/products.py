@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import shutil
+import os
+
+from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException
+from fastapi.responses import FileResponse
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.product_repository import ProductRepository
@@ -6,10 +11,12 @@ from app.repositories.product_category_association_repository import Association
 from app.repositories.category_repository import CategoryRepository
 
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, AllProductResponse, ProductIds
-from app.api.dependencies import get_db, get_current_product, get_current_project
-from app.db.models import Product
 from app.schemas.filter import FilterModel
+from app.db.models import Product
+from app.api.dependencies import get_db, get_current_product, get_current_project
 from app.api.routes.utils import collect_filtered_products
+from app.core.settings import settings
+
 
 router = APIRouter()
 
@@ -100,3 +107,63 @@ async def get_filtered_products_by_project(
         filtered_products.extend(collect_filtered_products(category, filters))
 
     return AllProductResponse(products=filtered_products)
+
+
+@router.post("/products/{product_id}/image", status_code=status.HTTP_201_CREATED)
+async def upload_product_image(
+    file: UploadFile = File(...),
+    product: Product = Depends(get_current_product),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Загрузка изображения для продукта.
+    """
+    # Создаем путь для хранения файла
+    product_dir = os.path.join(settings.STORAGE_DIR, "products", str(product.id))
+    os.makedirs(product_dir, exist_ok=True)
+    file_path = os.path.join(product_dir, "image.jpg")
+
+    # Сохраняем файл
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    # Обновляем запись в базе данных
+    await ProductRepository(db).update_image(product, file_path)
+    return {"detail": "Image uploaded successfully", "path": file_path}
+
+
+
+@router.delete("/products/{product_id}/image", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product_image(
+    product: Product = Depends(get_current_product),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Удаление изображения продукта.
+    """
+    # Удаляем файл
+    if os.path.exists(product.image):
+        os.remove(product.image)
+
+    # Обновляем запись в базе данных
+    await ProductRepository(db).update_image(product, None)
+
+    return {"detail": "Product image deleted successfully"}
+
+
+
+@router.get("/products/{product_id}/image", response_class=FileResponse)
+async def get_product_image(
+    current_product: Product = Depends(get_current_product),
+):
+    """
+    Получить изображение продукта по его ID.
+    """
+    if not current_product.image:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found for the product")
+    
+    image_path = settings.STORAGE_DIR / "products" / str(current_product.id) / current_product.image
+    if not image_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image file not found")
+    
+    return FileResponse(image_path, media_type="image/jpeg")

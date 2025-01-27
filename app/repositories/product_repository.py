@@ -38,3 +38,12 @@ class ProductRepository:
     async def delete_product(self, product: Product):
         await self.db.delete(product)
         await self.db.commit()
+
+    async def update_image(self, product: Product, image_path: str | None) -> Product:
+        """
+        Обновляет путь к изображению для продукта.
+        """
+        product.image = image_path
+        await self.db.commit()
+        await self.db.refresh(product)
+        return product
