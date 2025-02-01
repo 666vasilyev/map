@@ -97,7 +97,9 @@ class Object(Base):
         "Chain", 
         back_populates="source_object", 
         foreign_keys="[Chain.source_object_id]",
-        lazy='joined'
+        lazy='joined',
+        cascade="all, delete-orphan"
+
     )
 
     # Цепочки, где объект потребитель
@@ -105,7 +107,27 @@ class Object(Base):
         "Chain", 
         back_populates="target_object", 
         foreign_keys="[Chain.target_object_id]",
-        lazy='joined'
+        lazy='joined',
+        cascade="all, delete-orphan"
+    )
+
+    # Самореферентное отношение для филиалов (дочерних объектов)
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("objects.id"), 
+        nullable=True
+    )
+
+    parent: Mapped[Optional["Object"]] = relationship(
+        "Object", 
+        remote_side=[id], 
+        back_populates="branches"
+    )
+
+    branches: Mapped[Optional[List["Object"]]] = relationship(
+        "Object", 
+        back_populates="parent",
+        cascade="all, delete-orphan"
     )
 
 

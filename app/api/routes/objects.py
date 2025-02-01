@@ -39,6 +39,18 @@ async def get_object_by_id(
 
 @router.post("/", response_model=ObjectResponse)
 async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(get_db)):
+    """
+    Создать новый объект. Если указан `parent_id`, объект будет филиалом.
+    """
+    # Проверка наличия родительского объекта, если указан parent_id
+    parent_object = None
+    if object_data.parent_id:
+        parent_object = await ObjectRepository(db).get_object_by_id(object_data.parent_id)
+        if not parent_object:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Parent object with ID {object_data.parent_id} not found"
+            )
 
     obj = Object(
         x=object_data.x,
@@ -51,10 +63,10 @@ async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(ge
         icon=object_data.icon,
         image=object_data.image,
         file_storage=object_data.file_storage,
-        description=object_data.description
+        description=object_data.description,
+        parent_id=object_data.parent_id
     )
     object_db = await ObjectRepository(db).create_object(obj)
-    
     return object_db
 
 

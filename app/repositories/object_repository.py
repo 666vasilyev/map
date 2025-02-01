@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 from uuid import UUID
 from typing import List
@@ -12,12 +13,14 @@ class ObjectRepository:
     async def get_all_objects(self) -> List[Object]:
         result = await self.db.execute(
             select(Object)
+            .options(selectinload(Object.branches))
     )
         return result.unique().scalars().all()
 
     async def get_object_by_id(self, object_id: UUID) -> Object:
         result = await self.db.execute(
             select(Object)
+            .options(selectinload(Object.branches))
             .where(Object.id == object_id))
         obj = result.unique().scalar_one_or_none()
         return obj
@@ -33,7 +36,12 @@ class ObjectRepository:
         self.db.add(obj)
         await self.db.commit()
         await self.db.refresh(obj)
-        return obj
+
+        # Делаем дополнительный запрос на загрузку филиалов с помощью selectinload
+        query = select(Object).options(selectinload(Object.branches)).where(Object.id == obj.id)
+        result = await self.db.execute(query)
+
+        return result.unique().scalar_one_or_none()
 
     async def update_object(self, obj: Object, updates: dict) -> Object:
         for key, value in updates.items():

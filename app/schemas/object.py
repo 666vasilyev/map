@@ -16,6 +16,8 @@ class ObjectBase(BaseModel):
     image: Optional[str]
     file_storage: Optional[str] = None
     description: Optional[str] = None
+    parent_id: Optional[UUID] = None
+
 
 class ObjectCreate(ObjectBase):
     pass
@@ -28,30 +30,35 @@ class ObjectSmallResponse(BaseModel):
     name: str
     icon: Optional[str] = None
     description: Optional[str] = None
+    parent_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True
 
 class ObjectResponse(ObjectBase):
     id: UUID
+    parent_id: Optional[UUID] = None
+    branches: Optional[List["ObjectSmallResponse"]] = None
+
 
     class Config:
         from_attributes = True
 
 
 class ObjectUpdate(BaseModel):
-    x: Optional[float]
-    y: Optional[float]
-    name: Optional[str]
-    ownership: Optional[str]
-    category: Optional[str]
-    area: Optional[float]
-    status: Optional[StatusEnum]
-    links: Optional[str]
-    icon: Optional[str]
-    image: Optional[str]
-    file_storage: Optional[str]
-    description: Optional[str]
+    x: Optional[float] = None
+    y: Optional[float] = None
+    name: Optional[str] = None
+    ownership: Optional[str] = None
+    category: Optional[str] = None
+    area: Optional[float] = None
+    status: Optional[StatusEnum] = None
+    links: Optional[str] = None
+    icon: Optional[str] = None
+    image: Optional[str] = None
+    file_storage: Optional[str] = None
+    description: Optional[str] = None
+    parent_id: Optional[UUID] = None
 
 class AllObjectsResponse(BaseModel):
     objects: List[ObjectResponse]
