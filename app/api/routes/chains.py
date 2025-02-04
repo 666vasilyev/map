@@ -74,7 +74,7 @@ async def create_chain(chain_data: ChainCreate, db: AsyncSession = Depends(get_d
         ]
     )
 
-    if len(objects) < 2:
+    if len(objects) < 2 and (chain_data.source_object_id != chain_data.target_object_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Source or target object not found"
