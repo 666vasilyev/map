@@ -31,42 +31,6 @@ async def get_category_by_id(
     ):
 
     return current_category
-
-# @router.post("/", response_model=CategoryResponse)
-# async def create_category(category_data: CategoryCreate, db: AsyncSession = Depends(get_db)):
-#     category = Category(
-#         name=category_data.name
-#         )
-
-#     # Устанавливаем родительскую категорию, если передан parent_id
-#     if category_data.parent_id:
-#         parent_category = await CategoryRepository(db).get_category_by_id(category_data.parent_id)
-#         if not parent_category:
-#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent category not found")
-#         category.parent = parent_category
-        
-#     try:
-#         # Создание категории в базе данных
-#         category_db = await CategoryRepository(db).create_category(category)
-
-#         # Связываем категорию с проектом
-#         project_category = await ProjectCategoryAssociationRepository(db).create_association(
-#             project_id=category_data.project_id,
-#             category_id=category.id,
-#         )
-
-#         return CategoryResponse(
-#             id=category_db.id,
-#             name=category_db.name,
-#             project_id=project_category.project_id,
-#         )
-    
-#     except IntegrityError:
-#         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category already exists")
-#     except Exception as e:
-#         logging.error(f"An error occurred while creating a category: {e}")
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred while creating a category: {e}")
-
 @router.post("/", response_model=CategoryResponse)
 async def create_category(category_data: CategoryCreateV2, db: AsyncSession = Depends(get_db)):
     category = Category(
@@ -77,10 +41,11 @@ async def create_category(category_data: CategoryCreateV2, db: AsyncSession = De
     parent_category = await CategoryRepository(db).get_category_by_id(category_data.id)
     project = await ProjectRepository(db).get_project_by_id(category_data.id)
 
+    if not parent_category and not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent category or project not found")
+
     try:
-        if not parent_category and not project:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent category or project not found")
-        elif parent_category:
+        if parent_category:
             category.parent = parent_category
             category_db = await CategoryRepository(db).create_category(category)
         else:
@@ -97,9 +62,6 @@ async def create_category(category_data: CategoryCreateV2, db: AsyncSession = De
     
     except IntegrityError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category already exists")
-    except Exception as e:
-        logging.error(f"An error occurred while creating a category: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred while creating a category: {e}")
 
 @router.put("/{category_id}", response_model=CategoryResponse)
 async def update_category(
