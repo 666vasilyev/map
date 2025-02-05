@@ -8,7 +8,16 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.object_repository import ObjectRepository
-from app.schemas.object import ObjectUpdate, ObjectResponse, ObjectCreate, AllObjectsResponse
+from app.schemas.object import (
+    ObjectUpdate, 
+    ObjectResponse, 
+    ObjectCreate, 
+    AllObjectsResponse, 
+    LocationCheckRequest, 
+    AllSmallObjectsResponse, 
+    ObjectSmallResponse
+)
+
 from app.api.dependencies import get_db, get_current_object
 from app.db.models import Object
 from app.core.settings import settings
@@ -241,3 +250,20 @@ async def get_object_file(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
     
     return FileResponse(file_path, media_type="application/octet-stream", filename=file_name)
+
+@router.post("/check_location", response_model=AllSmallObjectsResponse)
+async def check_location(
+    location: LocationCheckRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Проверить наличие объектов в квадрате с центром в указанных координатах и радиусом 1 км.
+    """
+    objects = await ObjectRepository(db).get_objects_within_bounds(location.x, location.y)
+
+    if not objects:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objects in current location not found")
+    
+    return AllSmallObjectsResponse(
+        objects=[ObjectSmallResponse.model_validate(obj) for obj in objects]
+    )

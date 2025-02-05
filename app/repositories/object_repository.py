@@ -71,3 +71,15 @@ class ObjectRepository:
         await self.db.commit()
         await self.db.refresh(obj)
         return obj
+    
+    async def get_objects_within_bounds(self, x: float, y: float) -> List[Object]:
+        """Получить объекты в квадрате с центром (x, y) и радиусом 1 км."""
+        result = await self.db.execute(
+            select(Object)
+            .options(selectinload(Object.branches))
+            .where(
+                (Object.x >= x - 1.0) & (Object.x <= x + 1.0),
+                (Object.y >= y - 1.0) & (Object.y <= y + 1.0)
+            )
+        )
+        return result.unique().scalars().all()

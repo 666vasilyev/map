@@ -63,10 +63,12 @@ class ObjectUpdate(BaseModel):
 class AllObjectsResponse(BaseModel):
     objects: List[ObjectResponse]
 
-
-class ObjectCoordinates(BaseModel):
+class LocationCheckRequest(BaseModel):
     x: float
     y: float
+
+
+class ObjectCoordinates(LocationCheckRequest):
     id: UUID
 
 
@@ -76,3 +78,5 @@ class ObjectChainResponse(ObjectSmallResponse):
 class AllObjectChainResponse(BaseModel):
     objects: List[ObjectChainResponse]
 
+class AllSmallObjectsResponse(BaseModel):
+    objects: List[ObjectSmallResponse]
