@@ -262,7 +262,7 @@ async def check_location(
     objects = await ObjectRepository(db).get_objects_within_bounds(location.x, location.y)
 
     if not objects:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Objects in current location not found")
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="Objects in current location not found")
     
     return AllSmallObjectsResponse(
         objects=[ObjectSmallResponse.model_validate(obj) for obj in objects]
