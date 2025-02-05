@@ -1,8 +1,8 @@
 import uuid
 from typing import List, Optional
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 
 class Base(DeclarativeBase):
     pass
@@ -81,7 +81,7 @@ class Object(Base):
     ownership: Mapped[Optional[str]] = mapped_column(nullable=True)
     area: Mapped[float] = mapped_column(nullable=False)
     status: Mapped[int] = mapped_column(nullable=False)
-    links: Mapped[Optional[str]] = mapped_column(nullable=True)
+    links: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True) 
     icon: Mapped[Optional[str]] = mapped_column(nullable=True)
     image: Mapped[Optional[str]] = mapped_column(nullable=True)
     file_storage: Mapped[Optional[str]] = mapped_column(nullable=True)

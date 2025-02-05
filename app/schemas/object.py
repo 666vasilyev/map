@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
 from uuid import UUID
 
@@ -11,7 +11,7 @@ class ObjectBase(BaseModel):
     ownership: Optional[str]
     area: float
     status: StatusEnum
-    links: Optional[str]
+    links: Optional[List[str]] # для корректной работы со старыми данными
     icon: Optional[str]
     image: Optional[str]
     file_storage: Optional[str] = None
@@ -20,7 +20,8 @@ class ObjectBase(BaseModel):
 
 
 class ObjectCreate(ObjectBase):
-    pass
+    links: Optional[List[HttpUrl]]
+
 
 
 class ObjectSmallResponse(BaseModel):
@@ -53,7 +54,7 @@ class ObjectUpdate(BaseModel):
     category: Optional[str] = None
     area: Optional[float] = None
     status: Optional[StatusEnum] = None
-    links: Optional[str] = None
+    links: Optional[List[HttpUrl]] = None
     icon: Optional[str] = None
     image: Optional[str] = None
     file_storage: Optional[str] = None
