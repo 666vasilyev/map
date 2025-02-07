@@ -11,7 +11,7 @@ class ObjectBase(BaseModel):
     ownership: Optional[str]
     area: float
     status: StatusEnum
-    links: Optional[List[str]] # для корректной работы со старыми данными
+    links: Optional[List[str]] = None # для корректной работы со старыми данными
     icon: Optional[str]
     image: Optional[str]
     file_storage: Optional[str] = None
@@ -20,7 +20,7 @@ class ObjectBase(BaseModel):
 
 
 class ObjectCreate(ObjectBase):
-    links: Optional[List[HttpUrl]]
+    links: Optional[List[HttpUrl]] = None
 
 
 
