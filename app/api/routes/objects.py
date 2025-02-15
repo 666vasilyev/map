@@ -1,10 +1,12 @@
 import logging
 import shutil
 import os
+import uuid
+import json
 
-from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException, Form
 from fastapi.responses import FileResponse
-from typing import List
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.object_repository import ObjectRepository
@@ -17,10 +19,12 @@ from app.schemas.object import (
     AllSmallObjectsResponse, 
     ObjectSmallResponse
 )
+from app.schemas.enums import StatusEnum
 
 from app.api.dependencies import get_db, get_current_object
 from app.db.models import Object
 from app.core.settings import settings
+from app.api.routes.utils import attach_files_to_object, attach_image_to_object
 
 router = APIRouter()
 
@@ -47,35 +51,73 @@ async def get_object_by_id(
     return current_object
 
 @router.post("/", response_model=ObjectResponse)
-async def create_object(object_data: ObjectCreate, db: AsyncSession = Depends(get_db)):
+async def create_object(
+    x: float = Form(...),
+    y: float = Form(...),
+    name: str = Form(...),
+    ownership: Optional[str] = Form(None),
+    area: float = Form(...),
+    object_status: StatusEnum = Form(...),
+    links: Optional[str] = Form(None),
+    icon: Optional[str] = Form(None),
+    image: UploadFile = File(None),
+    files: List[UploadFile] = File(None),
+    file_storage: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    parent_id: Optional[uuid.UUID] = Form(None),
+    db: AsyncSession = Depends(get_db)
+):
     """
-    Создать новый объект. Если указан `parent_id`, объект будет филиалом.
+    Создать новый объект. Если указан `parent_id`, объект будет филиалом. 
+    Также можно сразу загрузить изображение и файлы.
     """
+
+    # Преобразуем `links` в список, если передана строка
+    if links:
+        try:
+            links = json.loads(links) if links.startswith("[") else links.split(",")
+            links = [link.strip() for link in links]  # Очистка пробелов
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Invalid JSON format for links"
+                )
+
     # Проверка наличия родительского объекта, если указан parent_id
     parent_object = None
-    if object_data.parent_id:
-        parent_object = await ObjectRepository(db).get_object_by_id(object_data.parent_id)
+    if parent_id:
+        parent_object = await ObjectRepository(db).get_object_by_id(parent_id)
         if not parent_object:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Parent object with ID {object_data.parent_id} not found"
+                detail=f"Parent object with ID {parent_id} not found"
             )
 
     obj = Object(
-        x=object_data.x,
-        y=object_data.y,
-        name=object_data.name,
-        ownership=object_data.ownership,
-        area=object_data.area,
-        status=object_data.status.value,
-        links=[str(link) for link in object_data.links] if object_data.links else None,
-        icon=object_data.icon,
-        image=object_data.image,
-        file_storage=object_data.file_storage,
-        description=object_data.description,
-        parent_id=object_data.parent_id
+        x=x,
+        y=y,
+        name=name,
+        ownership=ownership,
+        area=area,
+        status=object_status.value,
+        links=links,
+        icon=icon,
+        image=None,  # Обновится позже, если передано изображение
+        file_storage=None,  # Обновится позже, если загружены файлы
+        description=description,
+        parent_id=parent_id
     )
+
     object_db = await ObjectRepository(db).create_object(obj)
+
+    # Загружаем изображение, если передано
+    if image:
+        object_db = await attach_image_to_object(db, object_db, image)
+
+    # Загружаем файлы, если переданы
+    if files:
+        object_db = await attach_files_to_object(db, object_db, files)
+
     return object_db
 
 
@@ -110,20 +152,8 @@ async def upload_object_image(
     """
     Загрузка изображения для объекта.
     """
-
-    # Создаем путь для хранения файла
-    object_dir = os.path.join(settings.STORAGE_DIR, "objects", str(object.id))
-    os.makedirs(object_dir, exist_ok=True)
-    file_path = os.path.join(object_dir, "image.jpg")
-
-    # Сохраняем файл
-    with open(file_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    # Обновляем запись в базе данных
-    await ObjectRepository(db).update_image(object, file_path)
-
-    return {"detail": "Image uploaded successfully", "path": file_path}
+    await attach_image_to_object(db, object, file)
+    return {"detail": "Image uploaded successfully"}
 
 
 @router.post("/{object_id}/files", status_code=status.HTTP_201_CREATED)
@@ -135,21 +165,8 @@ async def upload_object_files(
     """
     Загрузка документов для объекта.
     """
-
-    # Создаем путь для хранения файлов
-    object_dir = os.path.join(settings.STORAGE_DIR, "objects", str(object.id), "files")
-    os.makedirs(object_dir, exist_ok=True)
-
-    saved_files = []
-    for file in files:
-        file_path = os.path.join(object_dir, file.filename)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-        saved_files.append(file_path)
-
-    # Обновляем запись в базе данных
-    await ObjectRepository(db).update_file_storage(object, object_dir)
-    return {"detail": "Files uploaded successfully", "files": saved_files}
+    await attach_files_to_object(db, object, files)
+    return {"detail": "Files uploaded successfully"}
 
 
 

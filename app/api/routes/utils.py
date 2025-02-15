@@ -1,11 +1,17 @@
+import os
+import aiofiles
+
 from typing import List, Optional
 from uuid import UUID
+from fastapi import UploadFile, HTTPException, status
 
 from app.schemas.tree import TreeResponse
 from app.schemas.product import ProductResponse
 from app.schemas.filter import FilterModel
 from app.schemas.object import ObjectCoordinates, ObjectChainResponse, AllObjectChainResponse
 from app.db.models import Category, Product, Object
+from app.core.settings import settings
+from app.repositories.object_repository import ObjectRepository
 
 
 def map_all_category(category: Category) -> TreeResponse:
@@ -113,3 +119,87 @@ def map_objects(objects: List[Object], product_id: UUID) -> AllObjectChainRespon
         mapped_objects.append(mapped_object)
 
     return mapped_objects
+
+
+async def save_uploaded_files(object_id: int, files: List[UploadFile]) -> List[str]:
+    """
+    Сохранение списка загруженных файлов в файловое хранилище объекта.
+    
+    :param object_id: ID объекта, к которому добавляются файлы.
+    :param files: Список загруженных файлов.
+    :return: Список путей сохраненных файлов.
+    """
+
+    # Создаем путь для хранения файлов
+    object_dir = os.path.join(settings.STORAGE_DIR, "objects", str(object_id), "files")
+    os.makedirs(object_dir, exist_ok=True)
+
+    saved_files = []
+    for file in files:
+        file_path = os.path.join(object_dir, file.filename)
+
+        try:
+            async with aiofiles.open(file_path, "wb") as f:
+                await f.write(await file.read())
+        except Exception as e:
+            raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error saving image: {str(e)}"
+            )
+        
+        saved_files.append(file_path)
+
+    return saved_files
+
+
+async def attach_files_to_object(db, object: Object, files: List[UploadFile]):
+    """
+    Загружает файлы в хранилище объекта и обновляет информацию в базе данных.
+    
+    :param db: Сессия базы данных.
+    :param object: Экземпляр объекта.
+    :param files: Список загруженных файлов.
+    """
+    if files:
+        saved_files = await save_uploaded_files(object.id, files)
+        obj = await ObjectRepository(db).update_file_storage(object, saved_files[0])
+    
+    return obj
+
+
+async def save_uploaded_image(object_id: int, file: UploadFile) -> str:
+    """
+    Сохраняет загруженное изображение для объекта.
+
+    :param object_id: ID объекта, к которому добавляется изображение.
+    :param file: Загруженный файл.
+    :return: Путь к сохраненному изображению.
+    """
+    # Создаем путь для хранения изображения
+    object_dir = os.path.join(settings.STORAGE_DIR, "objects", str(object_id))
+    os.makedirs(object_dir, exist_ok=True)
+    file_path = os.path.join(object_dir, "image.jpg")
+
+    try:
+        async with aiofiles.open(file_path, "wb") as f:
+            await f.write(await file.read())
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error saving image: {str(e)}"
+            )
+
+    return file_path
+
+
+async def attach_image_to_object(db, object: Object, file: UploadFile):
+    """
+    Загружает изображение и обновляет информацию об объекте в базе данных.
+
+    :param db: Сессия базы данных.
+    :param object: Экземпляр объекта.
+    :param file: Загруженный файл изображения.
+    """
+    file_path = await save_uploaded_image(object.id, file)
+    obj = await ObjectRepository(db).update_image(object, file_path)
+    return obj

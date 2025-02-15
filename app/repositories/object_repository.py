@@ -61,7 +61,12 @@ class ObjectRepository:
         obj.image = image_path
         await self.db.commit()
         await self.db.refresh(obj)
-        return obj
+        
+        # Делаем дополнительный запрос на загрузку филиалов с помощью selectinload
+        query = select(Object).options(selectinload(Object.branches)).where(Object.id == obj.id)
+        result = await self.db.execute(query)
+
+        return result.unique().scalar_one_or_none()
 
     async def update_file_storage(self, obj: Object, file_storage_path: str | None) -> Object:
         """
@@ -70,7 +75,13 @@ class ObjectRepository:
         obj.file_storage = file_storage_path
         await self.db.commit()
         await self.db.refresh(obj)
-        return obj
+
+        # Делаем дополнительный запрос на загрузку филиалов с помощью selectinload
+        query = select(Object).options(selectinload(Object.branches)).where(Object.id == obj.id)
+        result = await self.db.execute(query)
+
+        return result.unique().scalar_one_or_none()
+    
     
     async def get_objects_within_bounds(self, x: float, y: float) -> List[Object]:
         """Получить объекты в квадрате с центром (x, y) и радиусом 1 км."""
