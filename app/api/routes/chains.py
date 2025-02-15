@@ -54,7 +54,7 @@ async def get_object_by_product_id(
     objects = await ChainRepository(db).get_objects_by_product_id(product_id)
     if not objects:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="No objects found for this product"
         )
     
