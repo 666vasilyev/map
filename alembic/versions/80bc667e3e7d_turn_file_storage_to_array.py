@@ -20,20 +20,24 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def upgrade():
-    # Преобразуем текущие строки в массивы строк (например, 'string' -> '{"string"}')
-    op.execute("""
-        UPDATE objects
-        SET file_storage = CONCAT('{"', file_storage, '"}')
-        WHERE links IS NOT NULL;
-    """)
+def upgrade() -> None:
+    """
+    Преобразует столбец file_storage из строки в массив строк (VARCHAR[]).
+    Если в file_storage есть обычные строки, они оборачиваются в массив.
+    """
 
-    # Изменяем тип колонки на ARRAY с использованием postgresql_using
+    # 1. Преобразуем строки в корректные массивы (если файл одно значение, делаем массив из одного элемента)
+    op.execute(
+        "UPDATE objects SET file_storage = ARRAY[file_storage] WHERE file_storage IS NOT NULL AND NOT file_storage LIKE '{%'"
+    )
+
+    # 2. Меняем тип столбца с VARCHAR на VARCHAR[]
     op.alter_column(
-        'objects',
-        'file_storage',
-        type_=ARRAY(sa.String),
-        nullable=True,
+        "objects",
+        "file_storage",
+        existing_type=sa.VARCHAR(),
+        type_=sa.ARRAY(sa.VARCHAR()),
+        existing_nullable=True,
         postgresql_using="file_storage::TEXT[]"
     )
 
