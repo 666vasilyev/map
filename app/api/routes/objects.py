@@ -102,7 +102,7 @@ async def create_object(
         status=object_status.value,
         links=links,
         icon=icon,
-        image=[],  # Обновится позже, если передано изображение
+        image=False,  # Обновится позже, если передано изображение
         file_storage=[],  # Обновится позже, если загружены файлы
         description=description,
         parent_id=parent_id
