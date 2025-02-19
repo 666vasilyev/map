@@ -124,22 +124,52 @@ async def create_object(
 
 @router.put("/{object_id}", response_model=ObjectResponse)
 async def update_object(
-    object_data: ObjectUpdate, 
+    object_data: str = Form("{}"),  # Принимаем JSON как строку
+    files: List[UploadFile] = File(None),
+    image: UploadFile = File(None),
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
-    ):
+):
+    """
+    Обновление объекта. Можно передать новые данные (object_data), а также загрузить файлы и изображение.
+    """
+    try:
+        object_data_dict = json.loads(object_data)  # Разбираем JSON-строку в объект Python
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+            detail="Invalid JSON format in object_data"
+            )
 
-    updates = object_data.model_dump(exclude_unset=True)
+    # Обновляем объект, если переданы данные
+    updated_object = await ObjectRepository(db).update_object(current_object, object_data_dict)
 
-    return await ObjectRepository(db).update_object(current_object, updates)
+    # Загружаем изображение, если передано
+    if image:
+        updated_object = await attach_image_to_object(db, updated_object, image)
+
+    # Загружаем файлы, если переданы
+    if files:
+        updated_object = await attach_files_to_object(db, updated_object, files)
+
+    return ObjectResponse.model_validate(updated_object)
 
 
-@router.delete("/{object_id}")
+@router.delete("/{object_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_object(
     current_object: Object = Depends(get_current_object),
     db: AsyncSession = Depends(get_db)
-    ):
+):
+    """
+    Удаляет объект вместе со всеми его файлами и изображениями.
+    """
+    object_dir = os.path.join(settings.STORAGE_DIR, "objects", str(current_object.id))
 
+    # Удаляем папку с файлами, если существует
+    if os.path.exists(object_dir) and os.path.isdir(object_dir):
+        shutil.rmtree(object_dir)  # Полностью удаляем папку с объектом
+
+    # Удаляем объект из базы данных
     await ObjectRepository(db).delete_object(current_object)
 
 
