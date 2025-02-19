@@ -62,7 +62,6 @@ async def create_object(
     icon: Optional[str] = Form(None),
     image: UploadFile = File(None),
     files: List[UploadFile] = File(None),
-    file_storage: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     parent_id: Optional[uuid.UUID] = Form(None),
     db: AsyncSession = Depends(get_db)
@@ -196,8 +195,8 @@ async def upload_object_files(
     """
     Загрузка документов для объекта.
     """
-    await attach_files_to_object(db, object, files)
-    return {"detail": "Files uploaded successfully"}
+    obj = await attach_files_to_object(db, object, files)
+    return {"files": obj.file_storage}
 
 
 
@@ -250,7 +249,7 @@ async def get_object_image(
     if not current_object.image:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found for the object")
     
-    image_path = settings.STORAGE_DIR / "objects" / str(current_object.id) / current_object.image
+    image_path = settings.STORAGE_DIR / "objects" / str(current_object.id) / "image.jpg"
     if not image_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image file not found")
     

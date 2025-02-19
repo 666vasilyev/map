@@ -1,5 +1,6 @@
 import os
 import aiofiles
+import hashlib
 
 from typing import List, Optional
 from uuid import UUID
@@ -120,14 +121,32 @@ def map_objects(objects: List[Object], product_id: UUID) -> AllObjectChainRespon
 
     return mapped_objects
 
+async def file_checksum(file_path: str) -> str:
+    """Вычисляет хеш-сумму (SHA256) файла для проверки идентичности."""
+    hash_sha256 = hashlib.sha256()
+    async with aiofiles.open(file_path, "rb") as f:
+        while chunk := await f.read(8192):
+            hash_sha256.update(chunk)
+    return hash_sha256.hexdigest()
+
+
+async def upload_file_checksum(file: UploadFile) -> str:
+    """Вычисляет хеш-сумму загружаемого файла без его сохранения на диск."""
+    hash_sha256 = hashlib.sha256()
+    chunk = await file.read()
+    hash_sha256.update(chunk)
+    await file.seek(0)  # Сбрасываем позицию файла после чтения
+    return hash_sha256.hexdigest()
 
 async def save_uploaded_files(object_id: int, files: List[UploadFile]) -> List[str]:
     """
     Сохранение списка загруженных файлов в файловое хранилище объекта.
+
+    Если файл с таким именем уже существует, к имени файла добавляется суффикс (1), (2) и т.д.
     
     :param object_id: ID объекта, к которому добавляются файлы.
     :param files: Список загруженных файлов.
-    :return: Список путей сохраненных файлов.
+    :return: Список имён сохранённых файлов.
     """
 
     # Создаем путь для хранения файлов
@@ -136,18 +155,39 @@ async def save_uploaded_files(object_id: int, files: List[UploadFile]) -> List[s
 
     saved_files = []
     for file in files:
-        file_path = os.path.join(object_dir, file.filename)
+        base_filename = file.filename
+        file_path = os.path.join(object_dir, base_filename)
+
+        # Проверка: если файл с таким именем уже существует, генерируем новое имя
+        if os.path.exists(file_path):
+            existing_checksum = await file_checksum(file_path)
+            new_file_checksum = await upload_file_checksum(file)
+
+            if existing_checksum == new_file_checksum:
+                # 🔴 Если файл уже есть и он идентичен - НЕ загружаем
+                continue  # Пропускаем загрузку и переходим к следующему файлу
+
+            name, ext = os.path.splitext(base_filename)
+            counter = 1
+            new_filename = f"{name}({counter}){ext}"
+            file_path = os.path.join(object_dir, new_filename)
+            while os.path.exists(file_path):
+                counter += 1
+                new_filename = f"{name}({counter}){ext}"
+                file_path = os.path.join(object_dir, new_filename)
+            base_filename = new_filename  # обновляем имя файла
 
         try:
             async with aiofiles.open(file_path, "wb") as f:
+                # Читаем и записываем содержимое файла
                 await f.write(await file.read())
         except Exception as e:
             raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Error saving image: {str(e)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail=f"Error saving file: {str(e)}"
             )
         
-        saved_files.append(file_path)
+        saved_files.append(base_filename)
 
     return saved_files
 
@@ -162,7 +202,7 @@ async def attach_files_to_object(db, object: Object, files: List[UploadFile]):
     """
     if files:
         saved_files = await save_uploaded_files(object.id, files)
-        obj = await ObjectRepository(db).update_file_storage(object, saved_files[0])
+        obj = await ObjectRepository(db).update_file_storage(object, saved_files)
     
     return obj
 
@@ -200,6 +240,6 @@ async def attach_image_to_object(db, object: Object, file: UploadFile):
     :param object: Экземпляр объекта.
     :param file: Загруженный файл изображения.
     """
-    file_path = await save_uploaded_image(object.id, file)
-    obj = await ObjectRepository(db).update_image(object, file_path)
+    await save_uploaded_image(object.id, file)
+    obj = await ObjectRepository(db).update_image(object)
     return obj

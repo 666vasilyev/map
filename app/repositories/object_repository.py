@@ -58,7 +58,7 @@ class ObjectRepository:
         """
         Обновляет путь к изображению для объекта.
         """
-        obj.image = image_path
+        obj.image = True
         await self.db.commit()
         await self.db.refresh(obj)
         
@@ -68,11 +68,11 @@ class ObjectRepository:
 
         return result.unique().scalar_one_or_none()
 
-    async def update_file_storage(self, obj: Object, file_storage_path: str | None) -> Object:
+    async def update_file_storage(self, obj: Object, file_storage: List[str] | None) -> Object:
         """
         Обновляет путь к файловому хранилищу для объекта.
         """
-        obj.file_storage = file_storage_path
+        obj.file_storage = obj.file_storage + file_storage
         await self.db.commit()
         await self.db.refresh(obj)
 
