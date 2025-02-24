@@ -12,7 +12,7 @@ class ObjectBase(BaseModel):
     area: float
     status: StatusEnum
     links: Optional[List[str]] = None # для корректной работы со старыми данными
-    icon: Optional[bool]
+    icon: Optional[str]
     image: Optional[bool]
     file_storage: Optional[List[str]] = None
     description: Optional[str] = None
@@ -29,7 +29,7 @@ class ObjectSmallResponse(BaseModel):
     y: float
     id: UUID
     name: str
-    icon: Optional[bool] = None
+    icon: Optional[str] = None
     description: Optional[str] = None
     parent_id: Optional[UUID] = None
 

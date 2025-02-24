@@ -82,7 +82,7 @@ class Object(Base):
     area: Mapped[float] = mapped_column(nullable=False)
     status: Mapped[int] = mapped_column(nullable=False)
     links: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True) 
-    icon: Mapped[Optional[bool]] = mapped_column(nullable=True)
+    icon: Mapped[Optional[str]] = mapped_column(nullable=True)
     image: Mapped[Optional[bool]] = mapped_column(nullable=True)
     file_storage: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(nullable=True)
