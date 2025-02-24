@@ -10,7 +10,7 @@ class ObjectBase(BaseModel):
     name: str
     ownership: Optional[str]
     area: float
-    status: StatusEnum
+    object_status: StatusEnum
     links: Optional[List[str]] = None # для корректной работы со старыми данными
     icon: Optional[str]
     image: Optional[bool]
@@ -53,7 +53,7 @@ class ObjectUpdate(BaseModel):
     ownership: Optional[str] = None
     category: Optional[str] = None
     area: Optional[float] = None
-    status: Optional[StatusEnum] = None
+    object_status: Optional[StatusEnum] = None
     links: Optional[List[HttpUrl]] = None
     icon: Optional[bool] = None
     image: Optional[bool] = None

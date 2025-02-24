@@ -80,7 +80,7 @@ class Object(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     ownership: Mapped[Optional[str]] = mapped_column(nullable=True)
     area: Mapped[float] = mapped_column(nullable=False)
-    status: Mapped[int] = mapped_column(nullable=False)
+    object_status: Mapped[int] = mapped_column(nullable=False)
     links: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True) 
     icon: Mapped[Optional[str]] = mapped_column(nullable=True)
     image: Mapped[Optional[bool]] = mapped_column(nullable=True)

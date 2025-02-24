@@ -99,7 +99,7 @@ async def create_object(
         name=name,
         ownership=ownership,
         area=area,
-        status=object_status.value,
+        object_status=object_status.value,
         links=links,
         icon=icon,
         image=False,  # Обновится позже, если передано изображение
@@ -151,7 +151,7 @@ async def update_object(
     if files:
         updated_object = await attach_files_to_object(db, updated_object, files)
 
-    return ObjectResponse.model_validate(updated_object)
+    return updated_object
 
 
 @router.delete("/{object_id}", status_code=status.HTTP_204_NO_CONTENT)
