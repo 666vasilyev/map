@@ -57,7 +57,7 @@ class Chain(Base):
     source_object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id"))
     target_object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id"))
 
-    product_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("products.id"), nullable=True)
+    product_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("products.id"))
 
     source_object: Mapped["Object"] = relationship(
         "Object", back_populates="chains_source", foreign_keys=[source_object_id]
@@ -152,7 +152,8 @@ class Product(Base):
     # Связь с цепочками
     chains: Mapped[List["Chain"]] = relationship(
         "Chain", 
-        back_populates="product"
+        back_populates="product",
+        cascade="all, delete-orphan"  # Указание каскадного удаления
     )
 
     categories: Mapped[List["ProductCategoryAssociation"]] = relationship(
