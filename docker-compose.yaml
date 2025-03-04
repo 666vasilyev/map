@@ -28,7 +28,14 @@ services:
     image: postgres
     volumes:
       - ../postgres_data:/var/lib/postgresql/data
-    # ports:
-    #   - "5433:5432"
+  #  ports:
+  #    - "5433:5432"
     env_file:
      .env
+
+  frontend:
+    image: map-oblect:latest
+    ports:
+      - "80:80"
+    volumes:
+     - ./nginx_from_docker.conf:/etc/nginx/conf.d/default.conf
