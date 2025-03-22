@@ -5,10 +5,12 @@ from uuid import UUID
 from typing import List
 
 from app.db.models import Object
+from app.core.settings import settings
 
 class ObjectRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.settings = settings
 
     async def get_all_objects(self) -> List[Object]:
         result = await self.db.execute(
@@ -58,7 +60,7 @@ class ObjectRepository:
         """
         Обновляет путь к изображению для объекта.
         """
-        obj.image = True
+        obj.image = f'{settings.API_URL}/objects/{obj.id}/image'
         await self.db.commit()
         await self.db.refresh(obj)
         

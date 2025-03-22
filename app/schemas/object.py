@@ -13,7 +13,7 @@ class ObjectBase(BaseModel):
     object_status: StatusEnum
     links: Optional[List[str]] = None # для корректной работы со старыми данными
     icon: Optional[str]
-    image: Optional[bool]
+    image: Optional[str]
     file_storage: Optional[List[str]] = None
     description: Optional[str] = None
     parent_id: Optional[UUID] = None
@@ -21,7 +21,6 @@ class ObjectBase(BaseModel):
 
 class ObjectCreate(ObjectBase):
     links: Optional[List[HttpUrl]] = None
-
 
 
 class ObjectSmallResponse(BaseModel):
@@ -56,7 +55,7 @@ class ObjectUpdate(BaseModel):
     object_status: Optional[StatusEnum] = None
     links: Optional[List[HttpUrl]] = None
     icon: Optional[bool] = None
-    image: Optional[bool] = None
+    image: Optional[str] = None
     file_storage: Optional[List[str]] = None
     description: Optional[str] = None
     parent_id: Optional[UUID] = None

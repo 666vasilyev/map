@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     DEBUG: bool
     STORAGE_DIR: Path
 
+    API_URL: str
+
     @property
     def ASYNC_DATABASE_URL(self) -> str:
         return (
