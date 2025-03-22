@@ -16,7 +16,7 @@ class ChainRepository:
 
     async def get_chain_by_id(self, chain_id: UUID):
         result = await self.db.execute(select(Chain).where(Chain.id == chain_id))
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
     
     async def get_chains_by_product_id(self, product_id: UUID) -> List[Chain]:
         result = await self.db.execute(
