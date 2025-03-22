@@ -298,6 +298,52 @@ async def get_object_file(
     
     return FileResponse(file_path, media_type="application/octet-stream", filename=file_name)
 
+
+@router.delete("/{object_id}/files/{file_name}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_object_file(
+    file_name: str,
+    current_object: Object = Depends(get_current_object),
+    db: AsyncSession = Depends(get_db),
+
+):
+    """
+    Удалить файл из файлового хранилища объекта по его названию.
+    """
+    if not current_object.file_storage:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File storage not found for the object"
+        )
+
+    file_path = settings.STORAGE_DIR / "objects" / str(current_object.id) / "files" / file_name
+
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found"
+        )
+
+    try:
+        os.remove(file_path)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting file: {str(e)}"
+        )
+    
+    # Удаляем имя файла из file_storage
+    try:
+        await ObjectRepository(db).remove_file_from_storage(current_object, file_name)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+    return {"detail": f"File '{file_name}' deleted successfully"}
+
+
+# TODO: добавить project_id
 @router.post("/check_location", response_model=AllSmallObjectsResponse)
 async def check_location(
     location: LocationCheckRequest,
