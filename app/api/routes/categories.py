@@ -60,8 +60,8 @@ async def create_category(category_data: CategoryCreateV2, db: AsyncSession = De
             name=category_db.name,
         )
     
-    except IntegrityError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category already exists")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @router.put("/{category_id}", response_model=CategoryResponse)
 async def update_category(
