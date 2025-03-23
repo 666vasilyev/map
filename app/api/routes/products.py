@@ -1,9 +1,11 @@
 import shutil
 import os
 
-from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+from uuid import UUID
 
 from app.repositories.product_repository import ProductRepository
 from app.repositories.product_category_association_repository import AssociationRepository
@@ -44,23 +46,41 @@ async def get_product_by_ids(
     return AllProductResponse(products=products)
 
 @router.post("/", response_model=ProductResponse)
-async def create_product(product_data: ProductCreate, db: AsyncSession = Depends(get_db)):
+async def create_product(
+    name: str = Form(...),
+    description: str = Form(...),
+    country: str = Form(...),
+    categories: List[UUID] = Form(...),
+    image: UploadFile = File(None),
+    db: AsyncSession = Depends(get_db)
+):
+    categories_objects = await CategoryRepository(db).get_category_by_ids(categories)
 
-    categories = await CategoryRepository(db).get_category_by_ids(product_data.categories)
-
-    if len(categories) < len(product_data.categories):
+    if len(categories_objects) < len(categories):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not all categories exist")
     
     product = Product(
-        name=product_data.name,
-        description=product_data.description,
-        image=product_data.image,
-        country=product_data.country,
+        name=name,
+        description=description,
+        country=country,
     )
 
     product = await ProductRepository(db).create_product(product)
 
-    for category_id in product_data.categories:
+    if image:
+        # Создаем путь для хранения файла
+        product_dir = os.path.join(settings.STORAGE_DIR, "products", str(product.id))
+        os.makedirs(product_dir, exist_ok=True)
+        file_path = os.path.join(product_dir, "image.jpg")
+
+        # Сохраняем файл
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(image.file, f)
+
+        # Обновляем запись в базе данных
+        await ProductRepository(db).update_image(product)
+
+    for category_id in categories:
         await AssociationRepository(db).create_association(
             product_id=product.id,
             category_id=category_id
