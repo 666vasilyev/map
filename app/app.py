@@ -28,7 +28,6 @@ def get_app() -> FastAPI:
         lifespan=lifespan
 
     )
-    
 
     # Include routers
     app.include_router(chain_router, prefix="/chains", tags=["Chains"])

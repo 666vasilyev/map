@@ -3,7 +3,6 @@ import os
 
 from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException
 from fastapi.responses import FileResponse
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.product_repository import ProductRepository
@@ -128,8 +127,8 @@ async def upload_product_image(
         shutil.copyfileobj(file.file, f)
 
     # Обновляем запись в базе данных
-    await ProductRepository(db).update_image(product, file_path)
-    return {"detail": "Image uploaded successfully", "path": file_path}
+    await ProductRepository(db).update_image(product)
+    return {"detail": "Image uploaded successfully", "path": f'{settings.API_URL}/products/{product.id}/image'}
 
 
 
@@ -162,7 +161,7 @@ async def get_product_image(
     if not current_product.image:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found for the product")
     
-    image_path = settings.STORAGE_DIR / "products" / str(current_product.id) / current_product.image
+    image_path = settings.STORAGE_DIR / "products" / str(current_product.id) / "image.jpg"
     if not image_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image file not found")
     

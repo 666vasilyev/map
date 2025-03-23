@@ -4,10 +4,12 @@ from uuid import UUID
 from typing import List
 
 from app.db.models import Product
+from app.core.settings import settings
 
 class ProductRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.settings = settings
 
     async def get_all_products(self):
         result = await self.db.execute(select(Product))
@@ -39,11 +41,11 @@ class ProductRepository:
         await self.db.delete(product)
         await self.db.commit()
 
-    async def update_image(self, product: Product, image_path: str | None) -> Product:
+    async def update_image(self, product: Product) -> Product:
         """
         Обновляет путь к изображению для продукта.
         """
-        product.image = image_path
+        product.image = f'{settings.API_URL}/products/{product.id}/image'
         await self.db.commit()
         await self.db.refresh(product)
         return product
