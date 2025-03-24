@@ -145,7 +145,7 @@ class Product(Base):
     description: Mapped[Optional[str]] = mapped_column(nullable=True)
     image: Mapped[Optional[str]] = mapped_column(nullable=True)
 
-    country: Mapped[str] = mapped_column(nullable=True, default=None)
+    country: Mapped[Optional[str]] = mapped_column(nullable=True)
     
     object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("objects.id"), nullable=True)
 

@@ -4,7 +4,7 @@ import os
 from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from app.repositories.product_repository import ProductRepository
@@ -48,10 +48,10 @@ async def get_product_by_ids(
 @router.post("/", response_model=ProductResponse)
 async def create_product(
     name: str = Form(...),
-    description: str = Form(...),
-    country: str = Form(...),
+    description: Optional[str] = Form(None),
+    country: Optional[str] = Form(None),
     categories: List[UUID] = Form(...),
-    image: UploadFile = File(None),
+    image: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db)
 ):
     categories_objects = await CategoryRepository(db).get_category_by_ids(categories)
