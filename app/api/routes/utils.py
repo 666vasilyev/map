@@ -31,10 +31,10 @@ def apply_filters(products: List[Product], filters: FilterModel) -> List[Product
     """
     def matches(product: Product) -> bool:
         return all([
-            filters.name is None or filters.name in product.name,
-            filters.description is None or (product.description and filters.description in product.description),
-            filters.image is None or (product.image and filters.image in product.image),
-            filters.country is None or (product.country and filters.country in product.country)
+            filters.name is None or (product.name and filters.name.lower() in product.name.lower()),
+            filters.description is None or (product.description and filters.description.lower() in product.description.lower()),
+            filters.image is None or (product.image and filters.image.lower() in product.image.lower()),
+            filters.country is None or (product.country and filters.country.lower() in product.country.lower())
         ])
 
     return [product for product in products if matches(product)]
