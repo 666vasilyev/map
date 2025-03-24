@@ -85,14 +85,15 @@ class ObjectRepository:
         return result.unique().scalar_one_or_none()
     
     
-    async def get_objects_within_bounds(self, x: float, y: float) -> List[Object]:
+    async def get_objects_within_bounds(self, x: float, y: float, project_id: UUID) -> List[Object]:
         """Получить объекты в квадрате с центром (x, y) и радиусом 1 км."""
         result = await self.db.execute(
             select(Object)
             .options(selectinload(Object.branches))
             .where(
                 (Object.x >= x - 1.0) & (Object.x <= x + 1.0),
-                (Object.y >= y - 1.0) & (Object.y <= y + 1.0)
+                (Object.y >= y - 1.0) & (Object.y <= y + 1.0),
+                Object.project_id == project_id
             )
         )
         return result.unique().scalars().all()

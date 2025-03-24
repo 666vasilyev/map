@@ -21,8 +21,8 @@ from app.schemas.object import (
 )
 from app.schemas.enums import StatusEnum
 
-from app.api.dependencies import get_db, get_current_object
-from app.db.models import Object
+from app.api.dependencies import get_db, get_current_object, get_current_project
+from app.db.models import Object, Project
 from app.core.settings import settings
 from app.api.routes.utils import attach_files_to_object, attach_image_to_object
 
@@ -50,7 +50,7 @@ async def get_object_by_id(
 
     return current_object
 
-@router.post("/", response_model=ObjectResponse)
+@router.post("/{project_id}", response_model=ObjectResponse)
 async def create_object(
     x: float = Form(...),
     y: float = Form(...),
@@ -64,6 +64,7 @@ async def create_object(
     files: List[UploadFile] = File(None),
     description: Optional[str] = Form(None),
     parent_id: Optional[uuid.UUID] = Form(None),
+    current_project: Project = Depends(get_current_project),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -105,7 +106,8 @@ async def create_object(
         image=None,
         file_storage=[],  # Обновится позже, если загружены файлы
         description=description,
-        parent_id=parent_id
+        parent_id=parent_id,
+        project_id=current_project.id
     )
 
     object_db = await ObjectRepository(db).create_object(obj)
@@ -344,15 +346,16 @@ async def delete_object_file(
 
 
 # TODO: добавить project_id
-@router.post("/check_location", response_model=AllSmallObjectsResponse)
+@router.post("/check_location/{project_id}", response_model=AllSmallObjectsResponse)
 async def check_location(
     location: LocationCheckRequest,
+    current_project: Project = Depends(get_current_project),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Проверить наличие объектов в квадрате с центром в указанных координатах и радиусом 1 км.
     """
-    objects = await ObjectRepository(db).get_objects_within_bounds(location.x, location.y)
+    objects = await ObjectRepository(db).get_objects_within_bounds(location.x, location.y, current_project.id)
 
     if not objects:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="Objects in current location not found")

@@ -86,6 +86,7 @@ class Object(Base):
     image: Mapped[Optional[str]] = mapped_column(nullable=True)
     file_storage: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(nullable=True)
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("projects.id"), nullable=True)
 
     # Продукты, производимые объектом
     products: Mapped[List["Product"]] = relationship(
@@ -128,6 +129,11 @@ class Object(Base):
         "Object", 
         back_populates="parent",
         cascade="all, delete-orphan"
+    )
+    project: Mapped["Project"] = relationship(
+        "Project",
+        back_populates="objects",
+        lazy="joined"
     )
 
 
@@ -213,4 +219,11 @@ class Project(Base):
         cascade="all, delete-orphan",
         lazy="joined"
     )
+
+    objects: Mapped[List["Object"]] = relationship(
+        "Object",
+        back_populates="project",
+        lazy="joined"
+    )
+
 
