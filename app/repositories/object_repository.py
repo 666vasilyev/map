@@ -56,11 +56,14 @@ class ObjectRepository:
         await self.db.delete(obj)
         await self.db.commit()
 
-    async def update_image(self, obj: Object) -> Object:
+    async def update_image(self, obj: Object, image_flag: bool) -> Object:
         """
         Обновляет путь к изображению для объекта.
         """
-        obj.image = f'{settings.API_URL}/objects/{obj.id}/image'
+        if image_flag:
+            obj.image = f'{settings.API_URL}/objects/{obj.id}/image'
+        else:
+            obj.image = None
         await self.db.commit()
         await self.db.refresh(obj)
         

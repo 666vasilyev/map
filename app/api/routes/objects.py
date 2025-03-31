@@ -216,7 +216,7 @@ async def delete_object_image(
         os.remove(obj.image)
 
     # Обновляем запись в базе данных
-    await ObjectRepository(db).update_image(obj, None)
+    await ObjectRepository(db).update_image(obj, False)
     return {"detail": "Object image deleted successfully"}
 
 

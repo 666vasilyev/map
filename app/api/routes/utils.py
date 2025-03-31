@@ -242,5 +242,5 @@ async def attach_image_to_object(db, object: Object, file: UploadFile):
     :param file: Загруженный файл изображения.
     """
     await save_uploaded_image(object.id, file)
-    obj = await ObjectRepository(db).update_image(object)
+    obj = await ObjectRepository(db).update_image(object, True)
     return obj
