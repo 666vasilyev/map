@@ -78,7 +78,7 @@ async def create_product(
             shutil.copyfileobj(image.file, f)
 
         # Обновляем запись в базе данных
-        await ProductRepository(db).update_image(product)
+        await ProductRepository(db).update_image(product, True)
 
     for category_id in categories:
         await AssociationRepository(db).create_association(
@@ -147,7 +147,7 @@ async def upload_product_image(
         shutil.copyfileobj(file.file, f)
 
     # Обновляем запись в базе данных
-    await ProductRepository(db).update_image(product)
+    await ProductRepository(db).update_image(product, True)
     return {"detail": "Image uploaded successfully", "path": f'{settings.API_URL}/products/{product.id}/image'}
 
 
@@ -176,7 +176,7 @@ async def delete_product_image(
         )
 
     # Обновляем запись в базе данных
-    await ProductRepository(db).update_image(product, None)
+    await ProductRepository(db).update_image(product, False)
 
     return {"detail": "Product image deleted successfully"}
 

@@ -41,11 +41,14 @@ class ProductRepository:
         await self.db.delete(product)
         await self.db.commit()
 
-    async def update_image(self, product: Product) -> Product:
+    async def update_image(self, product: Product, image_flag: bool) -> Product:
         """
         Обновляет путь к изображению для продукта.
         """
-        product.image = f'{settings.API_URL}/products/{product.id}/image'
+        if image_flag:
+            product.image = f'{settings.API_URL}/products/{product.id}/image'
+        else:
+            product.image = None
         await self.db.commit()
         await self.db.refresh(product)
         return product
