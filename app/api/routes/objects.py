@@ -210,10 +210,22 @@ async def delete_object_image(
     """
     Удаление изображения объекта.
     """
+    
+    # Проверяем существование изображения
+    if not obj.image:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Image not found for the object"
+        )
 
-    # Удаляем файл
-    if os.path.exists(obj.image):
-        os.remove(obj.image)
+    # Удаляем файл если он существует
+    if os.path.exists(settings.STORAGE_DIR / "objects" / str(obj.id) / "image.jpg"):
+        os.remove(settings.STORAGE_DIR / "objects" / str(obj.id) / "image.jpg")
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Image file not found"
+        )
 
     # Обновляем запись в базе данных
     await ObjectRepository(db).update_image(obj, False)
@@ -230,8 +242,8 @@ async def delete_object_files(
     """
 
     # Удаляем папку с файлами
-    if os.path.exists(obj.file_storage):
-        shutil.rmtree(obj.file_storage)
+    if os.path.exists(settings.STORAGE_DIR / "objects" / str(obj.id) / "files"):
+        shutil.rmtree(settings.STORAGE_DIR / "objects" / str(obj.id) / "files")
 
     # Обновляем запись в базе данных
     await ObjectRepository(db).update_file_storage(obj, None)
@@ -243,7 +255,6 @@ async def delete_object_files(
 @router.get("/{object_id}/image", response_class=FileResponse)
 async def get_object_image(
     current_object: Object = Depends(get_current_object),
-    db: AsyncSession = Depends(get_db)
 ):
     """
     Получить изображение объекта по его ID.
