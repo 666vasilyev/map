@@ -160,25 +160,16 @@ async def delete_product_image(
     """
     Удаление изображения продукта.
     """
-    if not product.image:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Image not found for the product"
-        )
+
+    if product.image:
+        # Обновляем запись в базе данных
+        await ProductRepository(db).update_image(product, False)
         
     # Удаляем файл
     if os.path.exists(settings.STORAGE_DIR / "products" / str(product.id) / "image.jpg"):
         os.remove(settings.STORAGE_DIR / "products" / str(product.id) / "image.jpg")
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Image file not found"
-        )
 
-    # Обновляем запись в базе данных
-    await ProductRepository(db).update_image(product, False)
-
-    return {"detail": "Product image deleted successfully"}
+    return
 
 
 

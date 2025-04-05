@@ -210,26 +210,16 @@ async def delete_object_image(
     """
     Удаление изображения объекта.
     """
-    
-    # Проверяем существование изображения
-    if not obj.image:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Image not found for the object"
-        )
 
+    if obj.image:
+        # Обновляем запись в базе данных
+        await ObjectRepository(db).update_image(obj, False)
+        
     # Удаляем файл если он существует
     if os.path.exists(settings.STORAGE_DIR / "objects" / str(obj.id) / "image.jpg"):
         os.remove(settings.STORAGE_DIR / "objects" / str(obj.id) / "image.jpg")
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
-            detail="Image file not found"
-        )
 
-    # Обновляем запись в базе данных
-    await ObjectRepository(db).update_image(obj, False)
-    return {"detail": "Object image deleted successfully"}
+    return
 
 
 @router.delete("/{object_id}/files", status_code=status.HTTP_204_NO_CONTENT)
