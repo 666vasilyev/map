@@ -214,7 +214,7 @@ async def delete_object_image(
     # Проверяем существование изображения
     if not obj.image:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Image not found for the object"
         )
 
@@ -223,7 +223,7 @@ async def delete_object_image(
         os.remove(settings.STORAGE_DIR / "objects" / str(obj.id) / "image.jpg")
     else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_409_CONFLICT, 
             detail="Image file not found"
         )
 

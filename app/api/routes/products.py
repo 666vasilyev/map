@@ -162,7 +162,7 @@ async def delete_product_image(
     """
     if not product.image:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Image not found for the product"
         )
         
@@ -171,7 +171,7 @@ async def delete_product_image(
         os.remove(settings.STORAGE_DIR / "products" / str(product.id) / "image.jpg")
     else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Image file not found"
         )
 
