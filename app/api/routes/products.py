@@ -1,5 +1,6 @@
 import shutil
 import os
+import json
 
 from fastapi import APIRouter, UploadFile, File, status, Depends, HTTPException, Form
 from fastapi.responses import FileResponse
@@ -90,13 +91,40 @@ async def create_product(
 
 @router.put("/{product_id}", response_model=ProductResponse)
 async def update_product(
-    product_data: ProductUpdate, 
+    product_data: str = Form("{}"),  # Принимаем JSON как строку
+    image: UploadFile = File(None),
     current_product: Product = Depends(get_current_product), 
     db: AsyncSession = Depends(get_db)
-    ):
-    
-    updates = product_data.model_dump(exclude_unset=True)
-    return await ProductRepository(db).update_product(current_product, updates)
+):
+    """
+    Обновление продукта. Можно передать новые данные (product_data), а также загрузить изображение.
+    """
+    try:
+        product_data_dict = json.loads(product_data)  # Разбираем JSON-строку в объект Python
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+            detail="Invalid JSON format in product_data"
+        )
+
+    # Обновляем продукт, если переданы данные
+    updated_product = await ProductRepository(db).update_product(current_product, product_data_dict)
+
+    # Загружаем изображение, если передано
+    if image:
+        # Создаем путь для хранения файла
+        product_dir = os.path.join(settings.STORAGE_DIR, "products", str(updated_product.id))
+        os.makedirs(product_dir, exist_ok=True)
+        file_path = os.path.join(product_dir, "image.jpg")
+
+        # Сохраняем файл
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(image.file, f)
+
+        # Обновляем запись в базе данных
+        await ProductRepository(db).update_image(updated_product, True)
+
+    return updated_product
 
 
 @router.delete("/{product_id}")
