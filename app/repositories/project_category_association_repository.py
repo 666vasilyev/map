@@ -32,7 +32,7 @@ class ProjectCategoryAssociationRepository:
             )
             .where(ProjectCategoryAssociation.project_id == project_id)
         )
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     async def get_associations_by_category(self, category_id: uuid.UUID) -> List[ProjectCategoryAssociation]:
         """Получить все ассоциации для заданной категории."""
@@ -44,7 +44,7 @@ class ProjectCategoryAssociationRepository:
             )
             .where(ProjectCategoryAssociation.category_id == category_id)
         )
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     async def create_association(self, project_id: uuid.UUID, category_id: uuid.UUID) -> ProjectCategoryAssociation:
         """Создать новую ассоциацию между проектом и категорией."""
