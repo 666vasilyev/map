@@ -106,7 +106,8 @@ def map_objects(objects: List[Object], product_id: UUID) -> AllObjectChainRespon
                         id=chain.target_object.id,
                         x=chain.target_object.x,
                         y=chain.target_object.y,
-                        chain_id=chain.id
+                        chain_id=chain.id,
+                        name=chain.target_object.name
                     )
                 )
         mapped_object = ObjectChainResponse(

@@ -71,6 +71,7 @@ class LocationCheckRequest(BaseModel):
 class ObjectCoordinates(LocationCheckRequest):
     id: UUID
     chain_id: UUID
+    name: str
 
 
 class ObjectChainResponse(ObjectSmallResponse):
