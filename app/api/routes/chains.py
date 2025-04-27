@@ -27,7 +27,7 @@ async def list_chains(db: AsyncSession = Depends(get_db)):
     
 
 @router.get("/{chain_id}", response_model=ChainResponse)
-async def get_chain_by_id(current_chain: Chain = Depends(get_current_chain), db: AsyncSession = Depends(get_db)):
+async def get_chain_by_id(current_chain: Chain = Depends(get_current_chain)):
     return current_chain
 
 @router.get("/by-product/{product_id}", response_model=ChainsByProductResponse)
